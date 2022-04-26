@@ -202,30 +202,29 @@ void dumpGbaBios() {
 	{
 		fclose(f);
 		warnError("ERROR: BIOS already backed up!\n");
+		return;
 	}
-	else
-	{
-		//create base file with size
-		printf("Preparing file...\n");
-		createFile(biosname,0x4000);
-		f = fopen(biosname,"wb");
-		if(!f)
-			fatalError("ERROR: Could not create file! Exit...");
-		//send over bios dump command
-		sendToGba(gbaChan, 5);
-		//the gba might still be in a loop itself
-		sleep(1);
-		//lets go!
-		printf("Dumping...\n");
+
+	//create base file with size
+	printf("Preparing file...\n");
+	createFile(biosname,0x4000);
+	f = fopen(biosname,"wb");
+	if(!f)
+		fatalError("ERROR: Could not create file! Exit...");
+	//send over bios dump command
+	sendToGba(gbaChan, 5);
+	//the gba might still be in a loop itself
+	sleep(1);
+	//lets go!
+	printf("Dumping...\n");
+	
+	recvBuffFromGba(gbaChan, testdump, 0x4000);
 		
-		recvBuffFromGba(gbaChan, testdump, 0x4000);
-			
-		fwrite(testdump,0x4000,1,f);
-		printf("Closing file\n");
-		fclose(f);
-		printf("BIOS dumped!\n");
-		sleep(5);
-	}
+	fwrite(testdump,0x4000,1,f);
+	printf("Closing file\n");
+	fclose(f);
+	printf("BIOS dumped!\n");
+	sleep(5);
 }
 
 void handleGbaCart() {
