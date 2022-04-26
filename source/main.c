@@ -37,6 +37,8 @@ void printmain()
 void dumpGbaBios();
 void handleGbaCart();
 
+int fileExists(const char *fileName);
+
 void endproc()
 {
 	printf("Start pressed, exit\n");
@@ -267,13 +269,21 @@ void handleGbaCart() {
 		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
 	fixFName(savename+7); //fix name behind "/dumps/"
 	
+	int romExists = fileExists(gamename);
+	int saveExists = fileExists(savename);
+	
 	//let the user choose the option
-	printf("Press A to dump this game, it will take about %i minutes.\n",gbasize/1024/1024*3/2);
+	if(!romExists){
+		printf("Press A to dump this game, it will take about %i minutes.\n",gbasize/1024/1024*3/2);
+	}
 	printf("Press B if you want to cancel dumping this game.\n");
 	if(savesize > 0)
 	{
-		printf("Press Y to backup this save file.\n");
-		printf("Press X to restore this save file.\n");
+		if(!saveExists) {
+			printf("Press Y to backup this save file.\n");
+		} else {
+			printf("Press X to restore this save file.\n");
+		}
 		printf("Press Z to clear the save file on the GBA Cartridge.\n");
 	}
 	printf("\n");
@@ -312,25 +322,13 @@ void handleGbaCart() {
 			}
 		}
 	}
-	if(command == 1)
-	{
-		FILE *f = fopen(gamename,"rb");
-		if(f)
-		{
-			fclose(f);
-			command = 0;
-			warnError("ERROR: Game already dumped!\n");
-		}
+	if(command == 1 && romExists) {
+		command = 0;
+		warnError("ERROR: Game already dumped!\n");
 	}
-	else if(command == 2)
-	{
-		FILE *f = fopen(savename,"rb");
-		if(f)
-		{
-			fclose(f);
-			command = 0;
-			warnError("ERROR: Save already backed up!\n");
-		}
+	else if(command == 2 && saveExists) {
+		command = 0;
+		warnError("ERROR: Save already backed up!\n");
 	}
 	else if(command == 3)
 	{
@@ -429,4 +427,7 @@ void handleGbaCart() {
 		sleep(5);
 	}
 }
-				
+
+int fileExists(const char *fileName) {
+	return access(fileName, F_OK);
+}
