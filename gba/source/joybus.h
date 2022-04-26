@@ -8,8 +8,8 @@ void clearJoyBus();
 void ackJoyBusRead();
 void ackJoyBusWrite();
 
-int isJoyBusReadPending();
-int isJoyBusWritePending();
+int isJoyBusRecvPending();
+int isJoyBusSendPending();
 
 void waitJoyBusReadAck();
 void waitJoyBusWriteAck();

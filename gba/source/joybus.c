@@ -35,3 +35,11 @@ void sendJoyBus(u32 data) {
 u32 recvJoyBus() {
 	return REG_JOYRE;
 }
+
+int isJoyBusRecvPending() {
+	return REG_HS_CTRL&JOY_READ;
+}
+
+int isJoyBusSendPending() {
+	return REG_HS_CTRL&JOY_WRITE;
+}

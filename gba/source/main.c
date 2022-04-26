@@ -67,7 +67,7 @@ int main(void) {
 	//clear out previous messages
 	REG_HS_CTRL |= JOY_RW;
 	while (1) {
-		if(REG_HS_CTRL&JOY_READ)
+		if(isJoyBusRecvPending())
 		{
 			REG_HS_CTRL |= JOY_RW;
 			s32 gamesize = getGameSize();
@@ -209,7 +209,7 @@ int main(void) {
 			}
 			sendJoyBus(0);
 		}
-		else if(REG_HS_CTRL&JOY_WRITE)
+		else if(isJoyBusSendPending())
 		{
 			REG_HS_CTRL |= JOY_RW;
 			u32 choseval = recvJoyBus();
