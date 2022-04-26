@@ -10,5 +10,6 @@ void send(u32 msg);
 int isGbaConnected();
 
 u32 recvToBuff(u8 *buff, int len);
+void sendBuff(const u8 *buff, int len);
 
 #endif

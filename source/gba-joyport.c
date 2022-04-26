@@ -89,3 +89,9 @@ u32 recvToBuff(u8 *buff, int len) {
 	
 	return bytes_read;
 }
+
+void sendBuff(const u8 *buff, int len) {
+	int i;
+	for(i = 0; i < len; i+=4)
+		send(__builtin_bswap32(*(vu32*)(buff+i)));
+}

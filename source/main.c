@@ -414,8 +414,7 @@ void handleGbaCart() {
 		{
 			printf("Sending save\n");
 			VIDEO_WaitVSync();
-			for(i = 0; i < savesize; i+=4)
-				send(__builtin_bswap32(*(vu32*)(testdump+i)));
+			sendBuff(testdump, savesize);
 		}
 		printf("Waiting for GBA\n");
 		while(recv() != 0)
