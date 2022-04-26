@@ -367,18 +367,12 @@ void handleGbaCart() {
 		if(!f)
 			fatalError("ERROR: Could not create file! Exit...");
 		printf("Dumping...\n");
-		u32 bytes_read = 0;
 		while(gbasize > 0)
 		{
 			int toread = (gbasize > 0x400000 ? 0x400000 : gbasize);
-			int j;
-			for(j = 0; j < toread; j+=4)
-			{
-				*(vu32*)(testdump+j) = recv();
-				bytes_read+=4;
-				if((bytes_read&0xFFFF) == 0)
-					printf("\r%02.02f MB done",(float)(bytes_read/1024)/1024.f);
-			}
+			
+			recvToBuff(testdump, toread);
+			
 			fwrite(testdump,toread,1,f);
 			gbasize -= toread;
 		}
@@ -402,8 +396,9 @@ void handleGbaCart() {
 			readval = __builtin_bswap32(recv());
 		send(0); //got savesize
 		printf("Receiving...\n");
-		for(i = 0; i < savesize; i+=4)
-			*(vu32*)(testdump+i) = recv();
+		
+		recvToBuff(testdump, savesize);
+		
 		printf("Writing save...\n");
 		fwrite(testdump,savesize,1,f);
 		fclose(f);

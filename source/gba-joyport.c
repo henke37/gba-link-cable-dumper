@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <gccore.h>
 #include <string.h>
+#include <stdio.h>
 #include "gba-joyport.h"
 
 //from my tests 50us seems to be the lowest
@@ -74,4 +75,17 @@ void send(u32 msg)
 	resbuf[0] = 0;
 	SI_Transfer(1,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
+}
+
+u32 recvToBuff(u8 *buff, int len) {
+	int j;
+	u32 bytes_read = 0;
+	for(j = 0; j < len; j+=4) {
+		*(vu32*)(buff+j) = recv();
+		bytes_read+=4;
+		if((bytes_read&0xFFFF) == 0)
+			printf("\r%02.02f MB done",(float)(bytes_read/1024)/1024.f);
+	}
+	
+	return bytes_read;
 }
