@@ -53,7 +53,7 @@ int main(void) {
 	irqEnable(IRQ_VBLANK);
 
 	consoleDemoInit();
-	REG_JOYTR = 0;
+	sendJoyBus(0);
 	// ansi escape sequence to set print co-ordinates
 	// /x1b[line;columnH
 	u32 i;
@@ -72,34 +72,34 @@ int main(void) {
 			REG_HS_CTRL |= JOY_RW;
 			s32 gamesize = getGameSize();
 			u32 savesize = SaveSize(save_data,gamesize);
-			REG_JOYTR = gamesize;
+			sendJoyBus(gamesize);
 			//wait for a cmd receive for safety
 			waitJoyBusReadAck();
 			REG_HS_CTRL |= JOY_RW;
-			REG_JOYTR = savesize;
+			sendJoyBus(savesize);
 			//wait for a cmd receive for safety
 			waitJoyBusReadAck();
 			REG_HS_CTRL |= JOY_RW;
 			if(gamesize == -1)
 			{
-				REG_JOYTR = 0;
+				sendJoyBus(0);
 				continue; //nothing to read
 			}
 			//game in, send header
 			for(i = 0; i < 0xC0; i+=4)
 			{
-				REG_JOYTR = *(vu32*)(0x08000000+i);
+				sendJoyBus( *(vu32*)(0x08000000+i) );
 				waitJoyBusWriteAck();
 				REG_HS_CTRL |= JOY_RW;
 			}
-			REG_JOYTR = 0;
+			sendJoyBus(0);
 			//wait for other side to choose
 			waitJoyBusReadAck();
 			REG_HS_CTRL |= JOY_RW;
-			u32 choseval = REG_JOYRE;
+			u32 choseval = recvJoyBus();
 			if(choseval == 0)
 			{
-				REG_JOYTR = 0;
+				sendJoyBus(0);
 				continue; //nothing to read
 			}
 			else if(choseval == 1)
@@ -110,7 +110,7 @@ int main(void) {
 				//dump the game
 				for(i = 0; i < gamesize; i+=4)
 				{
-					REG_JOYTR = *(vu32*)(0x08000000+i);
+					sendJoyBus( *(vu32*)(0x08000000+i) );
 					waitJoyBusWriteAck();
 					REG_HS_CTRL |= JOY_RW;
 				}
@@ -145,21 +145,21 @@ int main(void) {
 				//restore interrupts
 				REG_IME = prevIrqMask;
 				//say gc side we read it
-				REG_JOYTR = savesize;
+				sendJoyBus(savesize);
 				//wait for a cmd receive for safety
 				waitJoyBusReadAck();
 				REG_HS_CTRL |= JOY_RW;
 				//send the save
 				for(i = 0; i < savesize; i+=4)
 				{
-					REG_JOYTR = *(vu32*)(save_data+i);
+					sendJoyBus( *(vu32*)(save_data+i) );
 					waitJoyBusWriteAck();
 					REG_HS_CTRL |= JOY_RW;
 				}
 			}
 			else if(choseval == 3 || choseval == 4)
 			{
-				REG_JOYTR = savesize;
+				sendJoyBus(savesize);
 				if(choseval == 3)
 				{
 					//receive the save
@@ -167,7 +167,7 @@ int main(void) {
 					{
 						waitJoyBusReadAck();
 						REG_HS_CTRL |= JOY_RW;
-						*(vu32*)(save_data+i) = REG_JOYRE;
+						*(vu32*)(save_data+i) = recvJoyBus();
 					}
 				}
 				else
@@ -202,17 +202,17 @@ int main(void) {
 				//restore interrupts
 				REG_IME = prevIrqMask;
 				//say gc side we're done
-				REG_JOYTR = 0;
+				sendJoyBus(0);
 				//wait for a cmd receive for safety
 				waitJoyBusReadAck();
 				REG_HS_CTRL |= JOY_RW;
 			}
-			REG_JOYTR = 0;
+			sendJoyBus(0);
 		}
 		else if(REG_HS_CTRL&JOY_WRITE)
 		{
 			REG_HS_CTRL |= JOY_RW;
-			u32 choseval = REG_JOYRE;
+			u32 choseval = recvJoyBus();
 			if(choseval == 5)
 			{
 				//disable interrupts
@@ -226,14 +226,14 @@ int main(void) {
 					u32 b = MidiKey2Freq((WaveData *)(i-3), 180-12, 0) * 2;
 					u32 c = MidiKey2Freq((WaveData *)(i-2), 180-12, 0) * 2;
 					u32 d = MidiKey2Freq((WaveData *)(i-1), 180-12, 0) * 2;
-					REG_JOYTR = ((a>>24<<24) | (d>>24<<16) | (c>>24<<8) | (b>>24));
+					sendJoyBus( ((a>>24<<24) | (d>>24<<16) | (c>>24<<8) | (b>>24)) );
 					waitJoyBusWriteAck();
 					REG_HS_CTRL |= JOY_RW;
 				}
 				//restore interrupts
 				REG_IME = prevIrqMask;
 			}
-			REG_JOYTR = 0;
+			sendJoyBus(0);
 		}
 		Halt();
 	}

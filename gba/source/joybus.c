@@ -27,3 +27,11 @@ void waitJoyBusReadAck() {
 void waitJoyBusWriteAck() {
 	while((REG_HS_CTRL&JOY_READ) == 0) ;
 }
+
+void sendJoyBus(u32 data) {
+	REG_JOYTR=data;
+}
+
+u32 recvJoyBus() {
+	return REG_JOYRE;
+}

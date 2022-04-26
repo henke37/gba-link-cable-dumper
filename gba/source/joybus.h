@@ -15,6 +15,6 @@ void waitJoyBusReadAck();
 void waitJoyBusWriteAck();
 
 void sendJoyBus(u32 data);
-u32 readJoyBus();
+u32 recvJoyBus();
 
 #endif
