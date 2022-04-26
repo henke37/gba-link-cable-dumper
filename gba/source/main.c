@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "libSave.h"
+#include "joybus.h"
 
 #define	REG_WAITCNT *(vu16 *)(REG_BASE + 0x204)
 #define JOY_WRITE 2
@@ -73,11 +74,11 @@ int main(void) {
 			u32 savesize = SaveSize(save_data,gamesize);
 			REG_JOYTR = gamesize;
 			//wait for a cmd receive for safety
-			while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+			waitJoyBusReadAck();
 			REG_HS_CTRL |= JOY_RW;
 			REG_JOYTR = savesize;
 			//wait for a cmd receive for safety
-			while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+			waitJoyBusReadAck();
 			REG_HS_CTRL |= JOY_RW;
 			if(gamesize == -1)
 			{
@@ -88,12 +89,12 @@ int main(void) {
 			for(i = 0; i < 0xC0; i+=4)
 			{
 				REG_JOYTR = *(vu32*)(0x08000000+i);
-				while((REG_HS_CTRL&JOY_READ) == 0) ;
+				waitJoyBusWriteAck();
 				REG_HS_CTRL |= JOY_RW;
 			}
 			REG_JOYTR = 0;
 			//wait for other side to choose
-			while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+			waitJoyBusReadAck();
 			REG_HS_CTRL |= JOY_RW;
 			u32 choseval = REG_JOYRE;
 			if(choseval == 0)
@@ -110,7 +111,7 @@ int main(void) {
 				for(i = 0; i < gamesize; i+=4)
 				{
 					REG_JOYTR = *(vu32*)(0x08000000+i);
-					while((REG_HS_CTRL&JOY_READ) == 0) ;
+					waitJoyBusWriteAck();
 					REG_HS_CTRL |= JOY_RW;
 				}
 				//restore interrupts
@@ -146,13 +147,13 @@ int main(void) {
 				//say gc side we read it
 				REG_JOYTR = savesize;
 				//wait for a cmd receive for safety
-				while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+				waitJoyBusReadAck();
 				REG_HS_CTRL |= JOY_RW;
 				//send the save
 				for(i = 0; i < savesize; i+=4)
 				{
 					REG_JOYTR = *(vu32*)(save_data+i);
-					while((REG_HS_CTRL&JOY_READ) == 0) ;
+					waitJoyBusWriteAck();
 					REG_HS_CTRL |= JOY_RW;
 				}
 			}
@@ -164,7 +165,7 @@ int main(void) {
 					//receive the save
 					for(i = 0; i < savesize; i+=4)
 					{
-						while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+						waitJoyBusReadAck();
 						REG_HS_CTRL |= JOY_RW;
 						*(vu32*)(save_data+i) = REG_JOYRE;
 					}
@@ -203,7 +204,7 @@ int main(void) {
 				//say gc side we're done
 				REG_JOYTR = 0;
 				//wait for a cmd receive for safety
-				while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+				waitJoyBusReadAck();
 				REG_HS_CTRL |= JOY_RW;
 			}
 			REG_JOYTR = 0;
@@ -226,7 +227,7 @@ int main(void) {
 					u32 c = MidiKey2Freq((WaveData *)(i-2), 180-12, 0) * 2;
 					u32 d = MidiKey2Freq((WaveData *)(i-1), 180-12, 0) * 2;
 					REG_JOYTR = ((a>>24<<24) | (d>>24<<16) | (c>>24<<8) | (b>>24));
-					while((REG_HS_CTRL&JOY_READ) == 0) ;
+					waitJoyBusWriteAck();
 					REG_HS_CTRL |= JOY_RW;
 				}
 				//restore interrupts
