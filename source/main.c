@@ -23,6 +23,8 @@
 
 u8 *testdump;
 
+s32 gbaChan=2;
+
 void printmain()
 {
 	printf("\x1b[2J");
@@ -143,7 +145,7 @@ int main(int argc, char *argv[])
 
 		while(1)
 		{
-			if(isGbaConnected()) break;
+			if(isGbaConnected(gbaChan)) break;
 			PAD_ScanPads();
 			VIDEO_WaitVSync();
 			if(PAD_ButtonsHeld(0))
@@ -151,11 +153,11 @@ int main(int argc, char *argv[])
 		}
 		printf("GBA Found! Waiting on BIOS\n");
 		
-		waitGbaBios();
+		waitGbaBios(gbaChan);
 		
 		printf("Ready, sending dumper\n");
 		
-		gbaUploadMultiboot(gba_mb_gba,gba_mb_gba_size);
+		gbaUploadMultiboot(gbaChan, gba_mb_gba, gba_mb_gba_size);
 		
 		printf("Done!\n");
 		sleep(2);
@@ -172,7 +174,7 @@ int main(int argc, char *argv[])
 				endproc();
 			else if(btns&PAD_BUTTON_A)
 			{
-				if(recv() == 0) {//ready
+				if(recv(gbaChan) == 0) {//ready
 					handleGbaCart();
 				}
 				
@@ -205,13 +207,13 @@ void dumpGbaBios() {
 		if(!f)
 			fatalError("ERROR: Could not create file! Exit...");
 		//send over bios dump command
-		send(5);
+		send(gbaChan, 5);
 		//the gba might still be in a loop itself
 		sleep(1);
 		//lets go!
 		printf("Dumping...\n");
 		for(i = 0; i < 0x4000; i+=4)
-			*(vu32*)(testdump+i) = recv();
+			*(vu32*)(testdump+i) = recv(gbaChan);
 		fwrite(testdump,0x4000,1,f);
 		printf("Closing file\n");
 		fclose(f);
@@ -227,10 +229,10 @@ void handleGbaCart() {
 	
 	int gbasize = 0;
 	while(gbasize == 0)
-		gbasize = __builtin_bswap32(recv());
-	send(0); //got gbasize
-	u32 savesize = __builtin_bswap32(recv());
-	send(0); //got savesize
+		gbasize = __builtin_bswap32(recv(gbaChan));
+	send(gbaChan, 0); //got gbasize
+	u32 savesize = __builtin_bswap32(recv(gbaChan));
+	send(gbaChan, 0); //got savesize
 	
 	if(gbasize == -1) 
 	{
@@ -240,7 +242,7 @@ void handleGbaCart() {
 	
 	//get rom header
 	for(i = 0; i < 0xC0; i+=4)
-		*(vu32*)(testdump+i) = recv();
+		*(vu32*)(testdump+i) = recv(gbaChan);
 		
 	//print out all the info from the  game
 	printf("Game Name: %.12s\n",(char*)(testdump+0xA0));
@@ -353,7 +355,7 @@ void handleGbaCart() {
 			warnError("ERROR: No Save to restore!\n");
 		}
 	}
-	send(command);
+	send(gbaChan, command);
 	//let gba prepare
 	sleep(1);
 	if(command == 0)
@@ -371,7 +373,7 @@ void handleGbaCart() {
 		{
 			int toread = (gbasize > 0x400000 ? 0x400000 : gbasize);
 			
-			recvToBuff(testdump, toread);
+			recvToBuff(gbaChan, testdump, toread);
 			
 			fwrite(testdump,toread,1,f);
 			gbasize -= toread;
@@ -393,11 +395,11 @@ void handleGbaCart() {
 		VIDEO_WaitVSync();
 		u32 readval = 0;
 		while(readval != savesize)
-			readval = __builtin_bswap32(recv());
-		send(0); //got savesize
+			readval = __builtin_bswap32(recv(gbaChan));
+		send(gbaChan,0); //got savesize
 		printf("Receiving...\n");
 		
-		recvToBuff(testdump, savesize);
+		recvToBuff(gbaChan, testdump, savesize);
 		
 		printf("Writing save...\n");
 		fwrite(testdump,savesize,1,f);
@@ -409,18 +411,18 @@ void handleGbaCart() {
 	{
 		u32 readval = 0;
 		while(readval != savesize)
-			readval = __builtin_bswap32(recv());
+			readval = __builtin_bswap32(recv(gbaChan));
 		if(command == 3)
 		{
 			printf("Sending save\n");
 			VIDEO_WaitVSync();
-			sendBuff(testdump, savesize);
+			sendBuff(gbaChan, testdump, savesize);
 		}
 		printf("Waiting for GBA\n");
-		while(recv() != 0)
+		while(recv(gbaChan) != 0)
 			VIDEO_WaitVSync();
 		printf(command == 3 ? "Save restored!\n" : "Save cleared!\n");
-		send(0);
+		send(gbaChan, 0);
 		sleep(5);
 	}
 }
