@@ -18,8 +18,8 @@ void waitGbaBios(s32 chan) {
 	resbuf[2]=0;
 	while(!(resbuf[2]&0x10))
 	{
-		doreset(chan);
-		getstatus(chan);
+		resetGba(chan);
+		getGbaStatus(chan);
 	}
 }
 
@@ -29,14 +29,14 @@ void gbaUploadMultiboot(s32 chan, const uint8_t *executable, size_t executableSi
 	int i;
 	//printf("Our Key: %08x\n", ourkey);
 	//get current sessionkey
-	u32 sessionkeyraw = recv(chan);
+	u32 sessionkeyraw = recvFromGba(chan);
 	u32 sessionkey = __builtin_bswap32(sessionkeyraw^0x7365646F);
 	//send over our own key
-	send(chan, __builtin_bswap32(ourkey));
+	sendToGba(chan, __builtin_bswap32(ourkey));
 	unsigned int fcrc = 0x15a0;
 	//send over gba header
 	for(i = 0; i < 0xC0; i+=4)
-		send(chan, __builtin_bswap32(*(vu32*)(executable+i)));
+		sendToGba(chan, __builtin_bswap32(*(vu32*)(executable+i)));
 	//printf("Header done! Sending ROM...\n");
 	for(i = 0xC0; i < sendsize; i+=4)
 	{
@@ -46,7 +46,7 @@ void gbaUploadMultiboot(s32 chan, const uint8_t *executable, size_t executableSi
 		enc^=sessionkey;
 		enc^=((~(i+(0x20<<20)))+1);
 		enc^=0x20796220;
-		send(chan, enc);
+		sendToGba(chan, enc);
 	}
 	fcrc |= (sendsize<<16);
 	//printf("ROM done! CRC: %08x\n", fcrc);
@@ -55,9 +55,9 @@ void gbaUploadMultiboot(s32 chan, const uint8_t *executable, size_t executableSi
 	fcrc^=sessionkey;
 	fcrc^=((~(i+(0x20<<20)))+1);
 	fcrc^=0x20796220;
-	send(chan, fcrc);
+	sendToGba(chan, fcrc);
 	//get crc back (unused)
-	recv(chan);
+	recvFromGba(chan);
 }
 
 unsigned int calckey(unsigned int size)

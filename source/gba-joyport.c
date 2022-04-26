@@ -44,21 +44,21 @@ int isGbaConnected(s32 chan) {
 	}
 	return 0;
 }
-void doreset(s32 chan)
+void resetGba(s32 chan)
 {
 	cmdbuf[0] = 0xFF; //reset
 	transval = 0;
 	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 }
-void getstatus(s32 chan)
+void getGbaStatus(s32 chan)
 {
 	cmdbuf[0] = 0; //status
 	transval = 0;
 	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 }
-u32 recv(s32 chan)
+u32 recvFromGba(s32 chan)
 {
 	memset(resbuf,0,32);
 	cmdbuf[0]=0x14; //read
@@ -67,7 +67,7 @@ u32 recv(s32 chan)
 	while(transval == 0) ;
 	return *(vu32*)resbuf;
 }
-void send(s32 chan, u32 msg)
+void sendToGba(s32 chan, u32 msg)
 {
 	cmdbuf[0]=0x15;cmdbuf[1]=(msg>>0)&0xFF;cmdbuf[2]=(msg>>8)&0xFF;
 	cmdbuf[3]=(msg>>16)&0xFF;cmdbuf[4]=(msg>>24)&0xFF;
@@ -77,11 +77,11 @@ void send(s32 chan, u32 msg)
 	while(transval == 0) ;
 }
 
-u32 recvToBuff(s32 chan, u8 *buff, int len) {
+u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
 	for(j = 0; j < len; j+=4) {
-		*(vu32*)(buff+j) = recv(chan);
+		*(vu32*)(buff+j) = recvFromGba(chan);
 		bytes_read+=4;
 		if((bytes_read&0xFFFF) == 0)
 			printf("\r%02.02f MB done",(float)(bytes_read/1024)/1024.f);
@@ -90,8 +90,8 @@ u32 recvToBuff(s32 chan, u8 *buff, int len) {
 	return bytes_read;
 }
 
-void sendBuff(s32 chan, const u8 *buff, int len) {
+void sendBuffToGba(s32 chan, const u8 *buff, int len) {
 	int i;
 	for(i = 0; i < len; i+=4)
-		send(chan,__builtin_bswap32(*(vu32*)(buff+i)));
+		sendToGba(chan,__builtin_bswap32(*(vu32*)(buff+i)));
 }
