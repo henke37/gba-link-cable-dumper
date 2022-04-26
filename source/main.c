@@ -224,20 +224,24 @@ void handleGbaCart() {
 	int i;
 	printf("Waiting for GBA\n");
 	VIDEO_WaitVSync();
+	
 	int gbasize = 0;
 	while(gbasize == 0)
 		gbasize = __builtin_bswap32(recv());
 	send(0); //got gbasize
 	u32 savesize = __builtin_bswap32(recv());
 	send(0); //got savesize
+	
 	if(gbasize == -1) 
 	{
 		warnError("ERROR: No (Valid) GBA Card inserted!\n");
 		return;
 	}
+	
 	//get rom header
 	for(i = 0; i < 0xC0; i+=4)
 		*(vu32*)(testdump+i) = recv();
+		
 	//print out all the info from the  game
 	printf("Game Name: %.12s\n",(char*)(testdump+0xA0));
 	printf("Game ID: %.4s\n",(char*)(testdump+0xAC));
@@ -247,6 +251,7 @@ void handleGbaCart() {
 		printf("Save Size: %02.02f KB\n \n",((float)(savesize))/1024.f);
 	else
 		printf("No Save File\n \n");
+		
 	//generate file paths
 	char gamename[64];
 	sprintf(gamename,"/dumps/%.12s [%.4s%.2s].gba",
@@ -256,6 +261,7 @@ void handleGbaCart() {
 	sprintf(savename,"/dumps/%.12s [%.4s%.2s].sav",
 		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
 	fixFName(savename+7); //fix name behind "/dumps/"
+	
 	//let the user choose the option
 	printf("Press A to dump this game, it will take about %i minutes.\n",gbasize/1024/1024*3/2);
 	printf("Press B if you want to cancel dumping this game.\n");
@@ -263,10 +269,10 @@ void handleGbaCart() {
 	{
 		printf("Press Y to backup this save file.\n");
 		printf("Press X to restore this save file.\n");
-		printf("Press Z to clear the save file on the GBA Cartridge.\n\n");
+		printf("Press Z to clear the save file on the GBA Cartridge.\n");
 	}
-	else
-		printf("\n");
+	printf("\n");
+	
 	int command = 0;
 	while(1)
 	{
