@@ -192,7 +192,6 @@ int main(int argc, char *argv[])
 void dumpGbaBios() {
 	const char *biosname = "/dumps/gba_bios.bin";
 	FILE *f = fopen(biosname,"rb");
-	int i;
 	if(f)
 	{
 		fclose(f);
@@ -212,8 +211,9 @@ void dumpGbaBios() {
 		sleep(1);
 		//lets go!
 		printf("Dumping...\n");
-		for(i = 0; i < 0x4000; i+=4)
-			*(vu32*)(testdump+i) = recvFromGba(gbaChan);
+		
+		recvBuffFromGba(gbaChan, testdump, 0x4000);
+			
 		fwrite(testdump,0x4000,1,f);
 		printf("Closing file\n");
 		fclose(f);
@@ -223,7 +223,6 @@ void dumpGbaBios() {
 }
 
 void handleGbaCart() {
-	int i;
 	printf("Waiting for GBA\n");
 	VIDEO_WaitVSync();
 	
@@ -241,8 +240,7 @@ void handleGbaCart() {
 	}
 	
 	//get rom header
-	for(i = 0; i < 0xC0; i+=4)
-		*(vu32*)(testdump+i) = recvFromGba(gbaChan);
+	recvBuffFromGba(gbaChan, testdump, 0xC0);
 		
 	//print out all the info from the  game
 	printf("Game Name: %.12s\n",(char*)(testdump+0xA0));
