@@ -21,6 +21,8 @@
 
 #include "gba_mb_gba.h"
 
+u8 *testdump;
+
 void printmain()
 {
 	printf("\x1b[2J");
@@ -30,7 +32,7 @@ void printmain()
 	printf("GBA BIOS Dumper by Dark Fader\n \n");
 }
 
-
+void dumpGbaBios();
 
 void endproc()
 {
@@ -120,7 +122,7 @@ int main(int argc, char *argv[])
 	VIDEO_ClearFrameBuffer(rmode, xfb, COLOR_BLACK);
 	PAD_Init();
 	initGbaJoyport();
-	u8 *testdump = memalign(32,0x400000);
+	testdump = memalign(32,0x400000);
 	if(!testdump) return 0;
 	if(!fatInitDefault())
 	{
@@ -377,38 +379,43 @@ int main(int argc, char *argv[])
 			}
 			else if(btns&PAD_BUTTON_Y)
 			{
-				const char *biosname = "/dumps/gba_bios.bin";
-				FILE *f = fopen(biosname,"rb");
-				if(f)
-				{
-					fclose(f);
-					warnError("ERROR: BIOS already backed up!\n");
-				}
-				else
-				{
-					//create base file with size
-					printf("Preparing file...\n");
-					createFile(biosname,0x4000);
-					f = fopen(biosname,"wb");
-					if(!f)
-						fatalError("ERROR: Could not create file! Exit...");
-					//send over bios dump command
-					send(5);
-					//the gba might still be in a loop itself
-					sleep(1);
-					//lets go!
-					printf("Dumping...\n");
-					for(i = 0; i < 0x4000; i+=4)
-						*(vu32*)(testdump+i) = recv();
-					fwrite(testdump,0x4000,1,f);
-					printf("Closing file\n");
-					fclose(f);
-					printf("BIOS dumped!\n");
-					sleep(5);
-				}
+				dumpGbaBios();
 			}
 		
 		}
 	}
 	return 0;
+}
+
+void dumpGbaBios() {
+	const char *biosname = "/dumps/gba_bios.bin";
+	FILE *f = fopen(biosname,"rb");
+	int i;
+	if(f)
+	{
+		fclose(f);
+		warnError("ERROR: BIOS already backed up!\n");
+	}
+	else
+	{
+		//create base file with size
+		printf("Preparing file...\n");
+		createFile(biosname,0x4000);
+		f = fopen(biosname,"wb");
+		if(!f)
+			fatalError("ERROR: Could not create file! Exit...");
+		//send over bios dump command
+		send(5);
+		//the gba might still be in a loop itself
+		sleep(1);
+		//lets go!
+		printf("Dumping...\n");
+		for(i = 0; i < 0x4000; i+=4)
+			*(vu32*)(testdump+i) = recv();
+		fwrite(testdump,0x4000,1,f);
+		printf("Closing file\n");
+		fclose(f);
+		printf("BIOS dumped!\n");
+		sleep(5);
+	}
 }
