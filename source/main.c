@@ -23,7 +23,7 @@
 
 u8 *testdump;
 
-s32 gbaChan=2;
+s32 gbaChan=1;
 
 void printmain()
 {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		printmain();
-		printf("Waiting for a GBA in port 2...\n");
+		printf("Waiting for a GBA in port %d...\n", gbaChan+1);
 
 		while(1)
 		{
