@@ -17,28 +17,12 @@
 
 u8 save_data[0x20000] __attribute__ ((section (".sbss")));
 
-s32 getGameSize(void)
-{
-	if(*(vu32*)(0x08000004) != 0x51AEFF24)
-		return -1;
-	s32 i;
-	for(i = (1<<20); i < (1<<25); i<<=1)
-	{
-		vu16 *rompos = (vu16*)(0x08000000+i);
-		int j;
-		bool romend = true;
-		for(j = 0; j < 0x1000; j++)
-		{
-			if(rompos[j] != j)
-			{
-				romend = false;
-				break;
-			}
-		}
-		if(romend) break;
-	}
-	return i;
-}
+s32 getGameSize(void);
+
+void readSave(u8 *data, u32 savesize);
+void writeSave(u8 *data, u32 savesize);
+
+void sendBiosDump();
 
 //---------------------------------------------------------------------------------
 // Program entry point
@@ -119,31 +103,7 @@ int main(void) {
 			}
 			else if(choseval == 2)
 			{
-				//disable interrupts
-				u32 prevIrqMask = REG_IME;
-				REG_IME = 0;
-				//backup save
-				switch (savesize){
-				case 0x200:
-					GetSave_EEPROM_512B(save_data);
-					break;
-				case 0x2000:
-					GetSave_EEPROM_8KB(save_data);
-					break;
-				case 0x8000:
-					GetSave_SRAM_32KB(save_data);
-					break;
-				case 0x10000:
-					GetSave_FLASH_64KB(save_data);
-					break;
-				case 0x20000:
-					GetSave_FLASH_128KB(save_data);
-					break;
-				default:
-					break;
-				}
-				//restore interrupts
-				REG_IME = prevIrqMask;
+				readSave(save_data,savesize);
 				//say gc side we read it
 				sendJoyBus(savesize);
 				//wait for a cmd receive for safety
@@ -176,31 +136,9 @@ int main(void) {
 					for(i = 0; i < savesize; i+=4)
 						*(vu32*)(save_data+i) = 0;
 				}
-				//disable interrupts
-				u32 prevIrqMask = REG_IME;
-				REG_IME = 0;
-				//write it
-				switch (savesize){
-				case 0x200:
-					PutSave_EEPROM_512B(save_data);
-					break;
-				case 0x2000:
-					PutSave_EEPROM_8KB(save_data);
-					break;
-				case 0x8000:
-					PutSave_SRAM_32KB(save_data);
-					break;
-				case 0x10000:
-					PutSave_FLASH_64KB(save_data);
-					break;
-				case 0x20000:
-					PutSave_FLASH_128KB(save_data);
-					break;
-				default:
-					break;
-				}
-				//restore interrupts
-				REG_IME = prevIrqMask;
+				
+				writeSave(save_data, savesize);
+				
 				//say gc side we're done
 				sendJoyBus(0);
 				//wait for a cmd receive for safety
@@ -215,23 +153,7 @@ int main(void) {
 			u32 choseval = recvJoyBus();
 			if(choseval == 5)
 			{
-				//disable interrupts
-				u32 prevIrqMask = REG_IME;
-				REG_IME = 0;
-				//dump BIOS
-				for (i = 0; i < 0x4000; i+=4)
-				{
-					// the lower bits are inaccurate, so just get it four times :)
-					u32 a = MidiKey2Freq((WaveData *)(i-4), 180-12, 0) * 2;
-					u32 b = MidiKey2Freq((WaveData *)(i-3), 180-12, 0) * 2;
-					u32 c = MidiKey2Freq((WaveData *)(i-2), 180-12, 0) * 2;
-					u32 d = MidiKey2Freq((WaveData *)(i-1), 180-12, 0) * 2;
-					sendJoyBus( ((a>>24<<24) | (d>>24<<16) | (c>>24<<8) | (b>>24)) );
-					waitJoyBusWriteAck();
-					REG_HS_CTRL |= JOY_RW;
-				}
-				//restore interrupts
-				REG_IME = prevIrqMask;
+				sendBiosDump();
 			}
 			sendJoyBus(0);
 		}
@@ -239,4 +161,101 @@ int main(void) {
 	}
 }
 
+s32 getGameSize(void) {
+	if(*(vu32*)(0x08000004) != 0x51AEFF24)
+		return -1;
+	s32 i;
+	for(i = (1<<20); i < (1<<25); i<<=1)
+	{
+		vu16 *rompos = (vu16*)(0x08000000+i);
+		int j;
+		bool romend = true;
+		for(j = 0; j < 0x1000; j++)
+		{
+			if(rompos[j] != j)
+			{
+				romend = false;
+				break;
+			}
+		}
+		if(romend) break;
+	}
+	return i;
+}
 
+void readSave(u8 *data, u32 savesize) {
+	//disable interrupts
+	u32 prevIrqMask = REG_IME;
+	REG_IME = 0;
+	//backup save
+	switch (savesize){
+	case 0x200:
+		GetSave_EEPROM_512B(data);
+		break;
+	case 0x2000:
+		GetSave_EEPROM_8KB(data);
+		break;
+	case 0x8000:
+		GetSave_SRAM_32KB(data);
+		break;
+	case 0x10000:
+		GetSave_FLASH_64KB(data);
+		break;
+	case 0x20000:
+		GetSave_FLASH_128KB(data);
+		break;
+	default:
+		break;
+	}
+	//restore interrupts
+	REG_IME = prevIrqMask;
+}
+
+void writeSave(u8 *data, u32 savesize) {
+	//disable interrupts
+	u32 prevIrqMask = REG_IME;
+	REG_IME = 0;
+	//write it
+	switch (savesize){
+	case 0x200:
+		PutSave_EEPROM_512B(data);
+		break;
+	case 0x2000:
+		PutSave_EEPROM_8KB(data);
+		break;
+	case 0x8000:
+		PutSave_SRAM_32KB(data);
+		break;
+	case 0x10000:
+		PutSave_FLASH_64KB(data);
+		break;
+	case 0x20000:
+		PutSave_FLASH_128KB(data);
+		break;
+	default:
+		break;
+	}
+	//restore interrupts
+	REG_IME = prevIrqMask;
+}
+
+void sendBiosDump() {
+	int i;
+	//disable interrupts
+	u32 prevIrqMask = REG_IME;
+	REG_IME = 0;
+	//dump BIOS
+	for (i = 0; i < 0x4000; i+=4)
+	{
+		// the lower bits are inaccurate, so just get it four times :)
+		u32 a = MidiKey2Freq((WaveData *)(i-4), 180-12, 0) * 2;
+		u32 b = MidiKey2Freq((WaveData *)(i-3), 180-12, 0) * 2;
+		u32 c = MidiKey2Freq((WaveData *)(i-2), 180-12, 0) * 2;
+		u32 d = MidiKey2Freq((WaveData *)(i-1), 180-12, 0) * 2;
+		sendJoyBus( ((a>>24<<24) | (d>>24<<16) | (c>>24<<8) | (b>>24)) );
+		waitJoyBusWriteAck();
+		REG_HS_CTRL |= JOY_RW;
+	}
+	//restore interrupts
+	REG_IME = prevIrqMask;
+}
