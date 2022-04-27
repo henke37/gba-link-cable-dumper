@@ -18,6 +18,9 @@
 
 u8 save_data[0x20000] __attribute__ ((section (".sbss")));
 
+#define ROM_DATA ((const u8 *)0x08000000)
+#define ROM_HEADER_LEN 0xC0
+
 s32 getGameSize(void);
 
 void readSave(u8 *data, u32 savesize);
@@ -41,7 +44,7 @@ int main(void) {
 	sendJoyBus(0);
 	// ansi escape sequence to set print co-ordinates
 	// /x1b[line;columnH
-	u32 i;
+	
 	iprintf("\x1b[9;2HGBA Link Cable Dumper v1.6\n");
 	iprintf("\x1b[10;4HPlease look at the TV\n");
 	// disable this, needs power
@@ -70,13 +73,10 @@ int main(void) {
 				sendJoyBus(0);
 				continue; //nothing to read
 			}
+			
 			//game in, send header
-			for(i = 0; i < 0xC0; i+=4)
-			{
-				sendJoyBus( *(vu32*)(0x08000000+i) );
-				waitJoyBusWriteAck();
-				REG_HS_CTRL |= JOY_RW;
-			}
+			sendJoyBusBuff(ROM_DATA, ROM_HEADER_LEN);
+			
 			sendJoyBus(0);
 			//wait for other side to choose
 			waitJoyBusReadAck();
@@ -93,12 +93,8 @@ int main(void) {
 				u32 prevIrqMask = REG_IME;
 				REG_IME = 0;
 				//dump the game
-				for(i = 0; i < gamesize; i+=4)
-				{
-					sendJoyBus( *(vu32*)(0x08000000+i) );
-					waitJoyBusWriteAck();
-					REG_HS_CTRL |= JOY_RW;
-				}
+				sendJoyBusBuff(ROM_DATA, gamesize);
+				
 				//restore interrupts
 				REG_IME = prevIrqMask;
 			}
@@ -111,12 +107,7 @@ int main(void) {
 				waitJoyBusReadAck();
 				REG_HS_CTRL |= JOY_RW;
 				//send the save
-				for(i = 0; i < savesize; i+=4)
-				{
-					sendJoyBus( *(vu32*)(save_data+i) );
-					waitJoyBusWriteAck();
-					REG_HS_CTRL |= JOY_RW;
-				}
+				sendJoyBusBuff(save_data, savesize);
 			}
 			else if(choseval == 3 || choseval == 4)
 			{
@@ -124,12 +115,7 @@ int main(void) {
 				if(choseval == 3)
 				{
 					//receive the save
-					for(i = 0; i < savesize; i+=4)
-					{
-						waitJoyBusReadAck();
-						REG_HS_CTRL |= JOY_RW;
-						*(vu32*)(save_data+i) = recvJoyBus();
-					}
+					recvJoyBusBuff(save_data, savesize);
 				}
 				else
 				{

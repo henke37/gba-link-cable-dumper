@@ -17,4 +17,7 @@ void waitJoyBusWriteAck();
 void sendJoyBus(u32 data);
 u32 recvJoyBus();
 
+void sendJoyBusBuff(const u8 *data, int len);
+void recvJoyBusBuff(u8 *data, int len);
+
 #endif

@@ -36,6 +36,24 @@ u32 recvJoyBus() {
 	return REG_JOYRE;
 }
 
+void sendJoyBusBuff(const u8 *data, int len) {
+	int i;
+	for(i = 0; i < len; i+=4) {
+		sendJoyBus( *(vu32*)(data+i) );
+		waitJoyBusWriteAck();
+		REG_HS_CTRL |= JOY_RW;
+	}
+}
+
+void recvJoyBusBuff(u8 *data, int len) {
+	int i;
+	for(i = 0; i < len; i+=4) {
+		waitJoyBusReadAck();
+		REG_HS_CTRL |= JOY_RW;
+		*(vu32*)(data+i) = recvJoyBus();
+	}
+}
+
 int isJoyBusRecvPending() {
 	return REG_HS_CTRL&JOY_READ;
 }
