@@ -7,6 +7,7 @@
 #include <gba.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libSave.h"
 #include "joybus.h"
 
@@ -133,8 +134,7 @@ int main(void) {
 				else
 				{
 					//clear the save
-					for(i = 0; i < savesize; i+=4)
-						*(vu32*)(save_data+i) = 0;
+					memset(save_data, 0, savesize);
 				}
 				
 				writeSave(save_data, savesize);
