@@ -1,0 +1,16 @@
+#ifndef PACKETS_H
+#define PACKETS_H
+
+typedef enum {
+	PING=1,
+	READ_PAD=5,
+	CHECK_GAME=10,
+	READ_HEADER=11,
+	READ_ROM=12,
+	READ_SAVE=20,
+	WRITE_SAVE=21,
+	CLEAR_SAVE=22,
+	READ_BIOS=30
+} packetType;
+
+#endif

@@ -18,12 +18,21 @@
 
 #include "gba-joyport.h"
 #include "gba-upload.h"
+#include "packets.h"
 
 #include "gba_mb_gba.h"
 
 u8 *testdump;
 
 s32 gbaChan=1;
+
+int gbasize=0;
+u32 savesize=0;
+
+char romFile[64];
+char saveFile[64];
+
+const char *biosname = "/dumps/gba_bios.bin";
 
 void printmain()
 {
@@ -36,6 +45,10 @@ void printmain()
 
 void dumpGbaBios();
 void handleGbaCart();
+void dumpRom();
+void backupSave();
+void restoreSave();
+void clearSave();
 
 int fileExists(const char *fileName);
 
@@ -82,15 +95,6 @@ bool dirExists(const char *path)
 		return true;
 	}
 	return false;
-}
-void createFile(const char *path, size_t size)
-{
-	int fd = open(path, O_WRONLY|O_CREAT);
-	if(fd >= 0)
-	{
-		ftruncate(fd, size);
-		close(fd);
-	}
 }
 void warnError(char *msg)
 {
@@ -169,7 +173,13 @@ int main(int argc, char *argv[])
 		
 		printf("Done!\n");
 		sleep(2);
-		//hm
+		
+		sendToGba(gbaChan, PING);
+		sendToGba(gbaChan, 1234);
+		if(recvFromGba(gbaChan)!=1234) {
+			fatalError("Ping failure!");
+		}
+		
 		while(1)
 		{
 			printmain();
@@ -177,18 +187,13 @@ int main(int argc, char *argv[])
 			printf("Press Y to backup the GBA BIOS.\n \n");
 			PAD_ScanPads();
 			VIDEO_WaitVSync();
+			
 			u32 btns = PAD_ButtonsDown(0);
-			if(btns&PAD_BUTTON_START)
+			if(btns&PAD_BUTTON_START) {
 				endproc();
-			else if(btns&PAD_BUTTON_A)
-			{
-				if(recvFromGba(gbaChan) == 0) {//ready
-					handleGbaCart();
-				}
-				
-			}
-			else if(btns&PAD_BUTTON_Y)
-			{
+			} else if(btns&PAD_BUTTON_A) {
+				handleGbaCart();
+			} else if(btns&PAD_BUTTON_Y) {
 				dumpGbaBios();
 			}
 		
@@ -198,7 +203,6 @@ int main(int argc, char *argv[])
 }
 
 void dumpGbaBios() {
-	const char *biosname = "/dumps/gba_bios.bin";
 	FILE *f = fopen(biosname,"rb");
 	if(f)
 	{
@@ -209,14 +213,11 @@ void dumpGbaBios() {
 
 	//create base file with size
 	printf("Preparing file...\n");
-	createFile(biosname,0x4000);
 	f = fopen(biosname,"wb");
 	if(!f)
 		fatalError("ERROR: Could not create file! Exit...");
 	//send over bios dump command
-	sendToGba(gbaChan, 5);
-	//the gba might still be in a loop itself
-	sleep(1);
+	sendToGba(gbaChan, READ_BIOS);
 	//lets go!
 	printf("Dumping...\n");
 	
@@ -225,7 +226,13 @@ void dumpGbaBios() {
 	fwrite(testdump,0x4000,1,f);
 	printf("Closing file\n");
 	fclose(f);
-	printf("BIOS dumped!\n");
+	
+	size_t readCnt=recvFromGba(gbaChan);
+	if(readCnt!=savesize) {
+		fatalError("Read size desync!\n");
+	}
+	
+	printf("BIOS dumped.\n");
 	sleep(5);
 }
 
@@ -233,12 +240,9 @@ void handleGbaCart() {
 	printf("Waiting for GBA\n");
 	VIDEO_WaitVSync();
 	
-	int gbasize = 0;
-	while(gbasize == 0)
-		gbasize = __builtin_bswap32(recvFromGba(gbaChan));
-	sendToGba(gbaChan, 0); //got gbasize
-	u32 savesize = __builtin_bswap32(recvFromGba(gbaChan));
-	sendToGba(gbaChan, 0); //got savesize
+	sendToGba(gbaChan, CHECK_GAME);
+	gbasize = __builtin_bswap32(recvFromGba(gbaChan));
+	savesize = __builtin_bswap32(recvFromGba(gbaChan));
 	
 	if(gbasize == -1) 
 	{
@@ -246,7 +250,7 @@ void handleGbaCart() {
 		return;
 	}
 	
-	//get rom header
+	sendToGba(gbaChan, READ_HEADER);
 	recvBuffFromGba(gbaChan, testdump, 0xC0);
 		
 	//print out all the info from the  game
@@ -260,21 +264,22 @@ void handleGbaCart() {
 		printf("No Save File\n \n");
 		
 	//generate file paths
-	char gamename[64];
-	sprintf(gamename,"/dumps/%.12s [%.4s%.2s].gba",
+	sprintf(romFile,"/dumps/%.12s [%.4s%.2s].gba",
 		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
-	fixFName(gamename+7); //fix name behind "/dumps/"
-	char savename[64];
-	sprintf(savename,"/dumps/%.12s [%.4s%.2s].sav",
-		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
-	fixFName(savename+7); //fix name behind "/dumps/"
+	fixFName(romFile+7); //fix name behind "/dumps/"
 	
-	int romExists = fileExists(gamename);
-	int saveExists = fileExists(savename);
+	sprintf(saveFile,"/dumps/%.12s [%.4s%.2s].sav",
+		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
+	fixFName(saveFile+7); //fix name behind "/dumps/"
+	
+	int romExists = fileExists(romFile);
+	int saveExists = fileExists(saveFile);
 	
 	//let the user choose the option
 	if(!romExists){
 		printf("Press A to dump this game, it will take about %i minutes.\n",gbasize/1024/1024*3/2);
+	} else {
+		printf("Rom dumped.\n");
 	}
 	printf("Press B if you want to cancel dumping this game.\n");
 	if(savesize > 0)
@@ -284,148 +289,135 @@ void handleGbaCart() {
 		} else {
 			printf("Press X to restore this save file.\n");
 		}
-		printf("Press Z to clear the save file on the GBA Cartridge.\n");
+		printf("Press L+R to clear the save file on the GBA Cartridge.\n");
 	}
 	printf("\n");
 	
-	int command = 0;
 	while(1)
 	{
 		PAD_ScanPads();
+		//sendToGba( gbaChan, READ_PAD);
+		//u32 gbaBtns = recvFromGba(gbaChan);
+		
 		VIDEO_WaitVSync();
 		u32 btns = PAD_ButtonsDown(0);
 		if(btns&PAD_BUTTON_START)
 			endproc();
-		else if(btns&PAD_BUTTON_A)
-		{
-			command = 1;
-			break;
-		}
-		else if(btns&PAD_BUTTON_B)
-			break;
-		else if(savesize > 0)
-		{
-			if(btns&PAD_BUTTON_Y)
-			{
-				command = 2;
-				break;
-			}
-			else if(btns&PAD_BUTTON_X)
-			{
-				command = 3;
-				break;
-			}
-			else if(btns&PAD_TRIGGER_Z)
-			{
-				command = 4;
-				break;
-			}
+		
+		if(btns&PAD_BUTTON_A) {
+			dumpRom();
+		} else if(btns & PAD_BUTTON_B) {
+			return;
+		} else if(btns & PAD_BUTTON_Y) {
+			backupSave();
+		} else if(btns & PAD_BUTTON_X) {
+			restoreSave();
+		} else if((btns & (PAD_TRIGGER_L | PAD_TRIGGER_R))==(PAD_TRIGGER_L | PAD_TRIGGER_R)) {
+			clearSave();
 		}
 	}
-	if(command == 1 && romExists) {
-		command = 0;
-		warnError("ERROR: Game already dumped!\n");
-	}
-	else if(command == 2 && saveExists) {
-		command = 0;
-		warnError("ERROR: Save already backed up!\n");
-	}
-	else if(command == 3)
+}
+
+void dumpRom() {
+//create base file with size
+	printf("Preparing file...\n");
+	FILE *f = fopen(romFile,"wb");
+	if(!f)
+		fatalError("ERROR: Could not create file! Exit...");
+	printf("Dumping...\n");
+	sendToGba(gbaChan, READ_ROM);
+	while(gbasize > 0)
 	{
-		size_t readsize = 0;
-		FILE *f = fopen(savename,"rb");
-		if(f)
-		{
-			fseek(f,0,SEEK_END);
-			readsize = ftell(f);
-			if(readsize != savesize)
-			{
-				command = 0;
-				warnError("ERROR: Save has the wrong size, aborting restore!\n");
-			}
-			else
-			{
-				rewind(f);
-				fread(testdump,readsize,1,f);
-			}
-			fclose(f);
-		}
-		else
-		{
-			command = 0;
-			warnError("ERROR: No Save to restore!\n");
-		}
+		int toread = (gbasize > 0x400000 ? 0x400000 : gbasize);
+		
+		recvBuffFromGba(gbaChan, testdump, toread);
+		
+		fwrite(testdump,1,toread,f);
+		gbasize -= toread;
 	}
-	sendToGba(gbaChan, command);
-	//let gba prepare
-	sleep(1);
-	if(command == 0)
+	printf("\nClosing file\n");
+	fclose(f);
+	
+	size_t readCnt=recvFromGba(gbaChan);
+	if(readCnt!=savesize) {
+		fatalError("Read size desync!\n");
+	}
+	printf("Game dumped.\n");
+	sleep(5);
+}
+
+void backupSave() {
+	printf("Preparing file...\n");
+	FILE *f = fopen(saveFile,"wb");
+	if(!f)
+		fatalError("ERROR: Could not create file! Exit...");
+	printf("Waiting for GBA\n");
+	VIDEO_WaitVSync();
+	
+	sendToGba(gbaChan,READ_SAVE); 
+	printf("Receiving...\n");
+	
+	recvBuffFromGba(gbaChan, testdump, savesize);
+	
+	size_t readCnt=recvFromGba(gbaChan);
+	if(readCnt!=savesize) {
+		fatalError("Read size desync!\n");
+	}
+	
+	printf("Writing save...\n");
+	fwrite(testdump,1,savesize,f);
+	fclose(f);
+	printf("Save backed up.\n");
+	sleep(5);
+}
+
+void restoreSave() {
+	printf("Preparing file...\n");
+	FILE *f = fopen(saveFile,"rb");
+	if(!f) {
+		warnError("ERROR: Could not open file!");
 		return;
-	else if(command == 1)
-	{
-		//create base file with size
-		printf("Preparing file...\n");
-		createFile(gamename,gbasize);
-		FILE *f = fopen(gamename,"wb");
-		if(!f)
-			fatalError("ERROR: Could not create file! Exit...");
-		printf("Dumping...\n");
-		while(gbasize > 0)
-		{
-			int toread = (gbasize > 0x400000 ? 0x400000 : gbasize);
-			
-			recvBuffFromGba(gbaChan, testdump, toread);
-			
-			fwrite(testdump,toread,1,f);
-			gbasize -= toread;
-		}
-		printf("\nClosing file\n");
+	}
+	
+	printf("Reading save\n");
+	VIDEO_WaitVSync();
+	size_t readC=fread(testdump,1,savesize,f);
+	if(readC!=savesize) {
 		fclose(f);
-		printf("Game dumped!\n");
-		sleep(5);
-	}
-	else if(command == 2)
-	{
-		//create base file with size
-		printf("Preparing file...\n");
-		createFile(savename,savesize);
-		FILE *f = fopen(savename,"wb");
-		if(!f)
-			fatalError("ERROR: Could not create file! Exit...");
-		printf("Waiting for GBA\n");
-		VIDEO_WaitVSync();
-		u32 readval = 0;
-		while(readval != savesize)
-			readval = __builtin_bswap32(recvFromGba(gbaChan));
-		sendToGba(gbaChan,0); //got savesize
-		printf("Receiving...\n");
-		
-		recvBuffFromGba(gbaChan, testdump, savesize);
-		
-		printf("Writing save...\n");
-		fwrite(testdump,savesize,1,f);
-		fclose(f);
-		printf("Save backed up!\n");
-		sleep(5);
-	}
-	else if(command == 3 || command == 4)
-	{
-		u32 readval = 0;
-		while(readval != savesize)
-			readval = __builtin_bswap32(recvFromGba(gbaChan));
-		if(command == 3)
-		{
-			printf("Sending save\n");
-			VIDEO_WaitVSync();
-			sendBuffToGba(gbaChan, testdump, savesize);
+		if(feof(f)) {
+			warnError("Error: File too short!");
+		} else {
+			warnError("Error: Reading file failed!");
 		}
-		printf("Waiting for GBA\n");
-		while(recvFromGba(gbaChan) != 0)
-			VIDEO_WaitVSync();
-		printf(command == 3 ? "Save restored!\n" : "Save cleared!\n");
-		sendToGba(gbaChan, 0);
-		sleep(5);
+		return;
 	}
+	
+	printf("Sending save\n");
+	VIDEO_WaitVSync();
+	sendToGba(gbaChan, WRITE_SAVE);
+	sendBuffToGba(gbaChan, testdump, savesize);
+	
+	fclose(f);
+	printf("Waiting for GBA\n");
+	size_t written=recvFromGba(gbaChan);
+	if(written!=savesize) {
+		fatalError("Write size desync!\n");
+	}
+	printf("Save restored.\n");
+	sleep(5);
+}
+
+void clearSave() {
+	printf("Clearing save\n");
+	VIDEO_WaitVSync();
+	sendToGba(gbaChan, CLEAR_SAVE);
+	
+	size_t written=recvFromGba(gbaChan);
+	if(written!=savesize) {
+		fatalError("Write size desync!\n");
+	}
+	printf("Done.");
+	sleep(5);
 }
 
 int fileExists(const char *fileName) {

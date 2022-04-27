@@ -11,8 +11,8 @@ void ackJoyBusWrite();
 int isJoyBusRecvPending();
 int isJoyBusSendPending();
 
-void waitJoyBusReadAck();
-void waitJoyBusWriteAck();
+void waitJoyBusSendAck();
+void waitJoyBusRecvReady();
 
 void sendJoyBus(u32 data);
 u32 recvJoyBus();

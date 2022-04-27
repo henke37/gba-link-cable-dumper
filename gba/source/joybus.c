@@ -20,19 +20,23 @@ void configureJoyBus() {
  
 void clearJoyBus();
 
-void waitJoyBusReadAck() {
+void waitJoyBusSendAck() {
 	while((REG_HS_CTRL&JOY_WRITE) == 0) ;
 }
 
-void waitJoyBusWriteAck() {
+void waitJoyBusRecvReady() {
 	while((REG_HS_CTRL&JOY_READ) == 0) ;
 }
 
 void sendJoyBus(u32 data) {
 	REG_JOYTR=data;
+	waitJoyBusSendAck();
+	REG_HS_CTRL |= JOY_WRITE;
 }
 
 u32 recvJoyBus() {
+	waitJoyBusRecvReady();
+	REG_HS_CTRL |= JOY_READ;
 	return REG_JOYRE;
 }
 
@@ -40,16 +44,12 @@ void sendJoyBusBuff(const u8 *data, int len) {
 	int i;
 	for(i = 0; i < len; i+=4) {
 		sendJoyBus( *(vu32*)(data+i) );
-		waitJoyBusWriteAck();
-		REG_HS_CTRL |= JOY_RW;
 	}
 }
 
 void recvJoyBusBuff(u8 *data, int len) {
 	int i;
 	for(i = 0; i < len; i+=4) {
-		waitJoyBusReadAck();
-		REG_HS_CTRL |= JOY_RW;
 		*(vu32*)(data+i) = recvJoyBus();
 	}
 }

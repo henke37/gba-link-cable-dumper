@@ -11,6 +11,8 @@
 #include "libSave.h"
 #include "joybus.h"
 
+#include "../../source/packets.h"
+
 #define	REG_WAITCNT *(vu16 *)(REG_BASE + 0x204)
 #define JOY_WRITE 2
 #define JOY_READ 4
@@ -21,12 +23,18 @@ u8 save_data[0x20000] __attribute__ ((section (".sbss")));
 #define ROM_DATA ((const u8 *)0x08000000)
 #define ROM_HEADER_LEN 0xC0
 
+#define biosSize 0x4000
+
 s32 getGameSize(void);
 
 void readSave(u8 *data, u32 savesize);
 void writeSave(u8 *data, u32 savesize);
 
 void sendBiosDump();
+
+void handlePacket(packetType type);
+
+u8 purloinBiosData(int offset);
 
 //---------------------------------------------------------------------------------
 // Program entry point
@@ -41,109 +49,92 @@ int main(void) {
 	irqEnable(IRQ_VBLANK);
 
 	consoleDemoInit();
-	sendJoyBus(0);
 	// ansi escape sequence to set print co-ordinates
 	// /x1b[line;columnH
 	
 	iprintf("\x1b[9;2HGBA Link Cable Dumper v1.6\n");
 	iprintf("\x1b[10;4HPlease look at the TV\n");
+	
 	// disable this, needs power
 	SNDSTAT = 0;
 	SNDBIAS = 0;
+	
 	// Set up waitstates for EEPROM access etc. 
 	REG_WAITCNT = 0x0317;
-	//clear out previous messages
-	REG_HS_CTRL |= JOY_RW;
+	
 	while (1) {
-		if(isJoyBusRecvPending())
-		{
-			REG_HS_CTRL |= JOY_RW;
+		packetType type=(packetType)recvJoyBus();
+		handlePacket(type);
+		Halt();
+	}
+}
+
+void handlePacket(packetType type) {
+	switch(type) {
+		case PING: {
+			sendJoyBus(recvJoyBus());
+		} break;
+		case READ_PAD: {
+			sendJoyBus(REG_KEYINPUT);
+		} break;
+		case CHECK_GAME: {
 			s32 gamesize = getGameSize();
 			u32 savesize = SaveSize(save_data,gamesize);
 			sendJoyBus(gamesize);
-			//wait for a cmd receive for safety
-			waitJoyBusReadAck();
-			REG_HS_CTRL |= JOY_RW;
 			sendJoyBus(savesize);
-			//wait for a cmd receive for safety
-			waitJoyBusReadAck();
-			REG_HS_CTRL |= JOY_RW;
-			if(gamesize == -1)
-			{
-				sendJoyBus(0);
-				continue; //nothing to read
-			}
-			
+		} break;
+		
+		case READ_HEADER: {
 			//game in, send header
 			sendJoyBusBuff(ROM_DATA, ROM_HEADER_LEN);
+		} break;
 			
-			sendJoyBus(0);
-			//wait for other side to choose
-			waitJoyBusReadAck();
-			REG_HS_CTRL |= JOY_RW;
-			u32 choseval = recvJoyBus();
-			if(choseval == 0)
-			{
-				sendJoyBus(0);
-				continue; //nothing to read
-			}
-			else if(choseval == 1)
-			{
-				//disable interrupts
-				u32 prevIrqMask = REG_IME;
-				REG_IME = 0;
-				//dump the game
-				sendJoyBusBuff(ROM_DATA, gamesize);
+		case READ_ROM:	{
+			s32 gamesize = getGameSize();
+			//disable interrupts
+			u32 prevIrqMask = REG_IME;
+			REG_IME = 0;
+			//dump the game
+			sendJoyBusBuff(ROM_DATA, gamesize);
+			
+			sendJoyBus(gamesize);
+			//restore interrupts
+			REG_IME = prevIrqMask;
+		} break;
+		
+		case READ_SAVE: {
+			s32 gamesize = getGameSize();
+			u32 savesize = SaveSize(save_data,gamesize);
+			
+			readSave(save_data,savesize);
+			sendJoyBusBuff(save_data, savesize);
+			sendJoyBus(savesize);
+		} break;
+		
+		case WRITE_SAVE: {
+			s32 gamesize = getGameSize();
+			u32 savesize = SaveSize(save_data,gamesize);
+			
+			recvJoyBusBuff(save_data, savesize);
+			writeSave(save_data, savesize);
+			sendJoyBus(savesize);
+		} break;
+		
+		case CLEAR_SAVE: {
+			s32 gamesize = getGameSize();
+			u32 savesize = SaveSize(save_data,gamesize);
+			
+			//clear the save
+			memset(save_data, 0, savesize);
 				
-				//restore interrupts
-				REG_IME = prevIrqMask;
-			}
-			else if(choseval == 2)
-			{
-				readSave(save_data,savesize);
-				//say gc side we read it
-				sendJoyBus(savesize);
-				//wait for a cmd receive for safety
-				waitJoyBusReadAck();
-				REG_HS_CTRL |= JOY_RW;
-				//send the save
-				sendJoyBusBuff(save_data, savesize);
-			}
-			else if(choseval == 3 || choseval == 4)
-			{
-				sendJoyBus(savesize);
-				if(choseval == 3)
-				{
-					//receive the save
-					recvJoyBusBuff(save_data, savesize);
-				}
-				else
-				{
-					//clear the save
-					memset(save_data, 0, savesize);
-				}
-				
-				writeSave(save_data, savesize);
-				
-				//say gc side we're done
-				sendJoyBus(0);
-				//wait for a cmd receive for safety
-				waitJoyBusReadAck();
-				REG_HS_CTRL |= JOY_RW;
-			}
-			sendJoyBus(0);
-		}
-		else if(isJoyBusSendPending())
-		{
-			REG_HS_CTRL |= JOY_RW;
-			u32 choseval = recvJoyBus();
-			if(choseval == 5)
-			{
-				sendBiosDump();
-			}
-			sendJoyBus(0);
-		}
-		Halt();
+			writeSave(save_data, savesize);
+			
+			sendJoyBus(savesize);
+		} break;
+		
+		case READ_BIOS:{
+			sendBiosDump();
+		} break;
 	}
 }
 
@@ -231,17 +222,23 @@ void sendBiosDump() {
 	u32 prevIrqMask = REG_IME;
 	REG_IME = 0;
 	//dump BIOS
-	for (i = 0; i < 0x4000; i+=4)
+	for (i = 0; i < biosSize; i+=4)
 	{
-		// the lower bits are inaccurate, so just get it four times :)
-		u32 a = MidiKey2Freq((WaveData *)(i-4), 180-12, 0) * 2;
-		u32 b = MidiKey2Freq((WaveData *)(i-3), 180-12, 0) * 2;
-		u32 c = MidiKey2Freq((WaveData *)(i-2), 180-12, 0) * 2;
-		u32 d = MidiKey2Freq((WaveData *)(i-1), 180-12, 0) * 2;
-		sendJoyBus( ((a>>24<<24) | (d>>24<<16) | (c>>24<<8) | (b>>24)) );
-		waitJoyBusWriteAck();
-		REG_HS_CTRL |= JOY_RW;
+		u8 a = purloinBiosData(i);
+		u8 b = purloinBiosData(i+1);
+		u8 c = purloinBiosData(i+2);
+		u8 d = purloinBiosData(i+3);
+		u32 abcd = a | (b<<8) | (c<<16) | (d<<24);
+		sendJoyBus(abcd);
 	}
 	//restore interrupts
 	REG_IME = prevIrqMask;
+	
+	sendJoyBus(biosSize);
+}
+
+u8 purloinBiosData(int offset) {
+	WaveData *fakeAddr=(WaveData *)( offset-(((offset & 3)+1)| 3) );
+	u8 b = (MidiKey2Freq(fakeAddr, 168, 0) * 2) >> 24;
+	return b;
 }
