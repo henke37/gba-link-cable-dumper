@@ -142,7 +142,7 @@ void handlePacket(u32 type) {
 		} break;
 		
 		default:
-			iprintf("Got unknown packet %8lx!",type);
+			iprintf("Got unknown packet %#010lx!",type);
 		break;
 	}
 }
