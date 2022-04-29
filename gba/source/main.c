@@ -33,6 +33,8 @@ void handlePacket(u32 type);
 
 u8 purloinBiosData(int offset);
 
+void sioHandler();
+
 //---------------------------------------------------------------------------------
 // Program entry point
 //---------------------------------------------------------------------------------
@@ -44,6 +46,9 @@ int main(void) {
 	// is required
 	irqInit();
 	irqEnable(IRQ_VBLANK);
+	
+	irqSet(IRQ_SERIAL, sioHandler);
+	irqEnable(IRQ_SERIAL);
 
 	consoleDemoInit();
 	
@@ -59,8 +64,14 @@ int main(void) {
 	// Set up waitstates for EEPROM access etc. 
 	REG_WAITCNT = 0x0317;
 	
+	configureJoyBus(true);
 	while (1) {
 		Halt();
+	}
+}
+
+void sioHandler() {
+	if(isJoyBusRecvPending()) {
 		u32 type=recvJoyBus();
 		handlePacket(type);
 	}
