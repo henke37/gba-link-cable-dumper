@@ -5,7 +5,9 @@ void initGbaJoyport();
 void resetGba(s32 chan);
 void getGbaStatus(s32 chan);
 u32 recvFromGba(s32 chan);
+u32 recvFromGbaRaw(s32 chan);
 void sendToGba(s32 chan, u32 msg);
+void sendToGbaRaw(s32 chan, const u8 *buff);
 
 int isGbaConnected(s32 chan);
 

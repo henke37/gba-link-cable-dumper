@@ -241,8 +241,8 @@ void handleGbaCart() {
 	VIDEO_WaitVSync();
 	
 	sendToGba(gbaChan, CHECK_GAME);
-	gbasize = __builtin_bswap32(recvFromGba(gbaChan));
-	savesize = __builtin_bswap32(recvFromGba(gbaChan));
+	gbasize = recvFromGba(gbaChan);
+	savesize = recvFromGba(gbaChan);
 	
 	if(gbasize == -1) 
 	{

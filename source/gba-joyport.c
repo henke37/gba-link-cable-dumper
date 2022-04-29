@@ -58,7 +58,7 @@ void getGbaStatus(s32 chan)
 	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 }
-u32 recvFromGba(s32 chan)
+u32 recvFromGbaRaw(s32 chan)
 {
 	memset(resbuf,0,32);
 	cmdbuf[0]=0x14; //read
@@ -67,10 +67,28 @@ u32 recvFromGba(s32 chan)
 	while(transval == 0) ;
 	return *(vu32*)resbuf;
 }
-void sendToGba(s32 chan, u32 msg)
-{
-	cmdbuf[0]=0x15;cmdbuf[1]=(msg>>0)&0xFF;cmdbuf[2]=(msg>>8)&0xFF;
-	cmdbuf[3]=(msg>>16)&0xFF;cmdbuf[4]=(msg>>24)&0xFF;
+u32 recvFromGba(s32 chan) {
+	return __builtin_bswap32(recvFromGbaRaw(chan));
+}
+
+void sendToGba(s32 chan, u32 msg) {
+	cmdbuf[0]=0x15;
+	cmdbuf[1]=(msg>>0)&0xFF;
+	cmdbuf[2]=(msg>>8)&0xFF;
+	cmdbuf[3]=(msg>>16)&0xFF;
+	cmdbuf[4]=(msg>>24)&0xFF;
+	transval = 0;
+	resbuf[0] = 0;
+	SI_Transfer(chan,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
+	while(transval == 0) ;
+}
+
+void sendToGbaRaw(s32 chan, const u8 *buff) {
+	cmdbuf[0]=0x15;
+	cmdbuf[1]=buff[0];
+	cmdbuf[2]=buff[1];
+	cmdbuf[3]=buff[2];
+	cmdbuf[4]=buff[3];
 	transval = 0;
 	resbuf[0] = 0;
 	SI_Transfer(chan,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
@@ -81,7 +99,7 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
 	for(j = 0; j < len; j+=4) {
-		*(vu32*)(buff+j) = recvFromGba(chan);
+		*(vu32*)(buff+j) = recvFromGbaRaw(chan);
 		bytes_read+=4;
 		if((bytes_read&0xFFFF) == 0)
 			printf("\r%02.02f MB done",(float)(bytes_read/1024)/1024.f);
