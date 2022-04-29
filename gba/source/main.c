@@ -14,9 +14,6 @@
 #include "../../source/packets.h"
 
 #define	REG_WAITCNT *(vu16 *)(REG_BASE + 0x204)
-#define JOY_WRITE 2
-#define JOY_READ 4
-#define JOY_RW 6
 
 u8 save_data[0x20000] __attribute__ ((section (".sbss")));
 

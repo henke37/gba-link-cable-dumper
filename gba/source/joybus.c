@@ -8,35 +8,36 @@
 #include <gba.h>
 #include "joybus.h"
 
+#define JOY_RESET 1
+#define JOY_SEND 2
+#define JOY_RECV 4
 
-#define JOY_WRITE 2
-#define JOY_READ 4
-#define JOY_RW 6
 
-
-void configureJoyBus() {
-
+void configureJoyBus(bool useInterrupts) {
+	REG_HS_CTRL = (REG_HS_CTRL & ~0x40) | (useInterrupts?0x40:0);
 }
  
-void clearJoyBus();
-
-void waitJoyBusSendAck() {
-	while((REG_HS_CTRL&JOY_WRITE) == 0) ;
+void clearJoyBus() {
+	REG_HS_CTRL |= 0x7;
 }
 
-void waitJoyBusRecvReady() {
-	while((REG_HS_CTRL&JOY_READ) == 0) ;
+void waitJoyBusSendCmd() {
+	while((REG_HS_CTRL&JOY_SEND) == 0) ;
+}
+
+void waitJoyBusRecvCmd() {
+	while((REG_HS_CTRL&JOY_RECV) == 0) ;
 }
 
 void sendJoyBus(u32 data) {
 	REG_JOYTR=data;
-	waitJoyBusSendAck();
-	REG_HS_CTRL |= JOY_WRITE;
+	waitJoyBusSendCmd();
+	REG_HS_CTRL |= JOY_SEND;
 }
 
 u32 recvJoyBus() {
-	waitJoyBusRecvReady();
-	REG_HS_CTRL |= JOY_READ;
+	waitJoyBusRecvCmd();
+	REG_HS_CTRL |= JOY_RECV;
 	return REG_JOYRE;
 }
 
@@ -54,10 +55,10 @@ void recvJoyBusBuff(u8 *data, int len) {
 	}
 }
 
-int isJoyBusRecvPending() {
-	return REG_HS_CTRL&JOY_READ;
+bool isJoyBusRecvPending() {
+	return REG_HS_CTRL&JOY_RECV;
 }
 
-int isJoyBusSendPending() {
-	return REG_HS_CTRL&JOY_WRITE;
+bool isJoyBusSendPending() {
+	return REG_HS_CTRL&JOY_SEND;
 }

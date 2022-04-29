@@ -1,18 +1,15 @@
 #ifndef JOYBUS_H
 #define JOYBUS_H
 
-void configureJoyBus();
+void configureJoyBus(bool useInterrupts);
 
 void clearJoyBus();
 
 void ackJoyBusRead();
 void ackJoyBusWrite();
 
-int isJoyBusRecvPending();
-int isJoyBusSendPending();
-
-void waitJoyBusSendAck();
-void waitJoyBusRecvReady();
+bool isJoyBusRecvPending();
+bool isJoyBusSendPending();
 
 void sendJoyBus(u32 data);
 u32 recvJoyBus();
