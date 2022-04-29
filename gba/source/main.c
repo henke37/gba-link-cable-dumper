@@ -32,7 +32,7 @@ void writeSave(u8 *data, u32 savesize);
 
 void sendBiosDump();
 
-void handlePacket(packetType type);
+void handlePacket(u32 type);
 
 u8 purloinBiosData(int offset);
 
@@ -49,9 +49,9 @@ int main(void) {
 	irqEnable(IRQ_VBLANK);
 
 	consoleDemoInit();
-	// ansi escape sequence to set print co-ordinates
-	// /x1b[line;columnH
 	
+	// ansi escape sequence to set print co-ordinates
+	// /x1b[line;columnH	
 	iprintf("\x1b[9;2HGBA Link Cable Dumper v1.6\n");
 	iprintf("\x1b[10;4HPlease look at the TV\n");
 	
@@ -63,21 +63,23 @@ int main(void) {
 	REG_WAITCNT = 0x0317;
 	
 	while (1) {
-		packetType type=(packetType)recvJoyBus();
-		handlePacket(type);
 		Halt();
+		u32 type=recvJoyBus();
+		handlePacket(type);
 	}
 }
 
-void handlePacket(packetType type) {
+void handlePacket(u32 type) {
 	switch(type) {
 		case PING: {
+			iprintf("Got a ping!\n");
 			sendJoyBus(recvJoyBus());
 		} break;
 		case READ_PAD: {
 			sendJoyBus(REG_KEYINPUT);
 		} break;
 		case CHECK_GAME: {
+			iprintf("Checking game...\n");
 			s32 gamesize = getGameSize();
 			u32 savesize = SaveSize(save_data,gamesize);
 			sendJoyBus(gamesize);
@@ -86,10 +88,12 @@ void handlePacket(packetType type) {
 		
 		case READ_HEADER: {
 			//game in, send header
+			iprintf("Reading rom header.\n");
 			sendJoyBusBuff(ROM_DATA, ROM_HEADER_LEN);
 		} break;
 			
 		case READ_ROM:	{
+			iprintf("Dumping rom (take a walk).\n");
 			s32 gamesize = getGameSize();
 			//disable interrupts
 			u32 prevIrqMask = REG_IME;
@@ -103,6 +107,7 @@ void handlePacket(packetType type) {
 		} break;
 		
 		case READ_SAVE: {
+			iprintf("Reading save.\n");
 			s32 gamesize = getGameSize();
 			u32 savesize = SaveSize(save_data,gamesize);
 			
@@ -112,6 +117,7 @@ void handlePacket(packetType type) {
 		} break;
 		
 		case WRITE_SAVE: {
+			iprintf("Writing save.\n");
 			s32 gamesize = getGameSize();
 			u32 savesize = SaveSize(save_data,gamesize);
 			
@@ -121,6 +127,7 @@ void handlePacket(packetType type) {
 		} break;
 		
 		case CLEAR_SAVE: {
+			iprintf("Erasing save. Hope you made a save first!\n");
 			s32 gamesize = getGameSize();
 			u32 savesize = SaveSize(save_data,gamesize);
 			
@@ -133,8 +140,13 @@ void handlePacket(packetType type) {
 		} break;
 		
 		case READ_BIOS:{
+			iprintf("Purloining bios\n");
 			sendBiosDump();
 		} break;
+		
+		default:
+			iprintf("Got unknown packet %8lx!",type);
+		break;
 	}
 }
 
