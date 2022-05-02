@@ -6,11 +6,12 @@
  */
  
 #include <gba.h>
+#include <stdio.h>
 #include "joybus.h"
 
 #define JOY_RESET 1
-#define JOY_SEND 2
-#define JOY_RECV 4
+#define JOY_SEND 4
+#define JOY_RECV 2
 
 
 void configureJoyBus(bool useInterrupts) {
@@ -30,6 +31,7 @@ void waitJoyBusRecvCmd() {
 }
 
 void sendJoyBus(u32 data) {
+	iprintf("S:%lx", data);
 	REG_JOYTR=data;
 	waitJoyBusSendCmd();
 	REG_HS_CTRL |= JOY_SEND;
@@ -37,8 +39,14 @@ void sendJoyBus(u32 data) {
 
 u32 recvJoyBus() {
 	waitJoyBusRecvCmd();
+	return recvJoyBusNoWait();
+}
+
+u32 recvJoyBusNoWait() {
+	u32 val = REG_JOYRE;
 	REG_HS_CTRL |= JOY_RECV;
-	return REG_JOYRE;
+	iprintf("R:%lx", val);
+	return val;
 }
 
 void sendJoyBusBuff(const u8 *data, int len) {
@@ -55,14 +63,14 @@ void recvJoyBusBuff(u8 *data, int len) {
 	}
 }
 
-bool isJoyBusRecvPending() {
-	return REG_HS_CTRL&JOY_RECV;
+bool isJoyBusRecvPending(u8 status) {
+	return status&JOY_RECV;
 }
 
-bool isJoyBusSendPending() {
-	return REG_HS_CTRL&JOY_SEND;
+bool isJoyBusSendPending(u8 status) {
+	return status&JOY_SEND;
 }
 
-bool isJoyBusResetPending() {
-	return REG_HS_CTRL&JOY_RESET;
+bool isJoyBusResetPending(u8 status) {
+	return status&JOY_RESET;
 }

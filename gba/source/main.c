@@ -65,23 +65,35 @@ int main(void) {
 	REG_WAITCNT = 0x0317;
 	
 	configureJoyBus(true);
+	
 	while (1) {
 		Halt();
 	}
 }
 
 void sioHandler() {
-	if(isJoyBusRecvPending()) {
-		u32 type=recvJoyBus();
+
+	//disable interrupts
+	u32 prevIrqMask = REG_IME; 
+	REG_IME = 0;
+	
+	u8 status=REG_HS_CTRL & 7;
+ 
+	iprintf("%#0x!",status);
+	if(isJoyBusRecvPending(status)) {
+		u32 type=recvJoyBusNoWait();
 		handlePacket(type);
-	} else if(isJoyBusSendPending()) {
+	} else if(isJoyBusSendPending(status)) {
 		iprintf("Spurious send?\n");
-	} else if(isJoyBusResetPending()) {
+	} else if(isJoyBusResetPending(status)) {
 		iprintf("Reset.\n");
 		SystemCall(0x26); 
 	} else {
 		iprintf("Spurious SIO IRQ?\n");
 	}
+	
+	//restore interrupts
+	REG_IME = prevIrqMask;
 }
 
 void handlePacket(u32 type) {

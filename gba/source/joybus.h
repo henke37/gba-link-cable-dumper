@@ -8,12 +8,13 @@ void clearJoyBus();
 void ackJoyBusRead();
 void ackJoyBusWrite();
 
-bool isJoyBusRecvPending();
-bool isJoyBusSendPending();
-bool isJoyBusResetPending();
+bool isJoyBusRecvPending(u8);
+bool isJoyBusSendPending(u8);
+bool isJoyBusResetPending(u8);
 
 void sendJoyBus(u32 data);
 u32 recvJoyBus();
+u32 recvJoyBusNoWait();
 
 void sendJoyBusBuff(const u8 *data, int len);
 void recvJoyBusBuff(u8 *data, int len);
