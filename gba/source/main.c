@@ -74,6 +74,13 @@ void sioHandler() {
 	if(isJoyBusRecvPending()) {
 		u32 type=recvJoyBus();
 		handlePacket(type);
+	} else if(isJoyBusSendPending()) {
+		iprintf("Spurious send?\n");
+	} else if(isJoyBusResetPending()) {
+		iprintf("Reset.\n");
+		SystemCall(0x26); 
+	} else {
+		iprintf("Spurious SIO IRQ?\n");
 	}
 }
 

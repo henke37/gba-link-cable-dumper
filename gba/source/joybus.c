@@ -62,3 +62,7 @@ bool isJoyBusRecvPending() {
 bool isJoyBusSendPending() {
 	return REG_HS_CTRL&JOY_SEND;
 }
+
+bool isJoyBusResetPending() {
+	return REG_HS_CTRL&JOY_RESET;
+}

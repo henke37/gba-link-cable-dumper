@@ -10,6 +10,7 @@ void ackJoyBusWrite();
 
 bool isJoyBusRecvPending();
 bool isJoyBusSendPending();
+bool isJoyBusResetPending();
 
 void sendJoyBus(u32 data);
 u32 recvJoyBus();
