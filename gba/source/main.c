@@ -72,28 +72,30 @@ int main(void) {
 }
 
 void sioHandler() {
-
-	//disable interrupts
-	u32 prevIrqMask = REG_IME; 
-	REG_IME = 0;
 	
 	u8 status=REG_HS_CTRL & 7;
+	REG_HS_CTRL = 0;
  
-	iprintf("%#0x!",status);
+	iprintf("IRQ: %#0x %#0x!\n",status, REG_JSTAT);
 	if(isJoyBusRecvPending(status)) {
 		u32 type=recvJoyBusNoWait();
 		handlePacket(type);
-	} else if(isJoyBusSendPending(status)) {
+	}
+	if(isJoyBusSendPending(status)) {
 		iprintf("Spurious send?\n");
-	} else if(isJoyBusResetPending(status)) {
+	}
+	if(isJoyBusResetPending(status)) {
 		iprintf("Reset.\n");
+		RegisterRamReset(RESET_SIO);
 		SystemCall(0x26); 
-	} else {
+	}
+	if(status==0) {
 		iprintf("Spurious SIO IRQ?\n");
 	}
 	
-	//restore interrupts
-	REG_IME = prevIrqMask;
+	REG_HS_CTRL = status;
+	
+	REG_HS_CTRL=0x40;
 }
 
 void handlePacket(u32 type) {
@@ -172,7 +174,7 @@ void handlePacket(u32 type) {
 		} break;
 		
 		default:
-			iprintf("Got unknown packet %#010lx!",type);
+			iprintf("Got unknown packet %#010lx!\n",type);
 		break;
 	}
 }
