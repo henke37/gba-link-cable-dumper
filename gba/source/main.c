@@ -280,5 +280,5 @@ u8 purloinBiosData(int offset) {
 
 void noreturn rebootSystem() {
 	SystemCall(0x26); 
-	while(1);
+	__builtin_unreachable();
 }
