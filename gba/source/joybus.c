@@ -19,10 +19,6 @@
 void enableJoyBusIRQ(bool enabled) {
 	REG_HS_CTRL = enabled?0x40:0;
 }
- 
-void clearJoyBus() {
-	REG_HS_CTRL |= 0x7;
-}
 
 void waitJoyBusSendCmd() {
 	while((REG_HS_CTRL&JOYCNT_SEND) == 0) ;

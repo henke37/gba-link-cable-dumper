@@ -3,11 +3,6 @@
 
 void enableJoyBusIRQ(bool enabled);
 
-void clearJoyBus();
-
-void ackJoyBusRead();
-void ackJoyBusWrite();
-
 bool isJoyBusRecvPending();
 bool isJoyBusSendPending();
 bool isJoyBusResetPending();
