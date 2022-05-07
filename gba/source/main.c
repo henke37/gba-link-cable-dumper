@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdnoreturn.h>
 #include "libSave.h"
 #include "joybus.h"
 
@@ -34,6 +35,8 @@ void handlePacket(u32 type);
 u8 purloinBiosData(int offset);
 
 void sioHandler();
+
+void noreturn rebootSystem();
 
 //---------------------------------------------------------------------------------
 // Program entry point
@@ -88,7 +91,7 @@ void sioHandler() {
 	if(isJoyBusResetPending()) {
 		iprintf("Reset.\n");
 		RegisterRamReset(RESET_SIO);
-		SystemCall(0x26); 
+		rebootSystem();
 	}
 	
 	enableJoyBusIRQ(true);
@@ -273,4 +276,9 @@ u8 purloinBiosData(int offset) {
 	WaveData *fakeAddr=(WaveData *)( offset-(((offset & 3)+1)| 3) );
 	u8 b = (MidiKey2Freq(fakeAddr, 168, 0) * 2) >> 24;
 	return b;
+}
+
+void noreturn rebootSystem() {
+	SystemCall(0x26); 
+	while(1);
 }
