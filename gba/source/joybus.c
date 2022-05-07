@@ -9,13 +9,15 @@
 #include <stdio.h>
 #include "joybus.h"
 
-#define JOY_RESET 1
-#define JOY_SEND 4
-#define JOY_RECV 2
+#define JOYCNT_RESET 1
+#define JOYCNT_SEND 4
+#define JOYCNT_RECV 2
 
+#define JOYSTAT_RECV 2
+#define JOYSTAT_SEND 8
 
-void configureJoyBus(bool useInterrupts) {
-	REG_HS_CTRL = (REG_HS_CTRL & ~0x40) | (useInterrupts?0x40:0);
+void enableJoyBusIRQ(bool enabled) {
+	REG_HS_CTRL = (REG_HS_CTRL & ~0x40) | (enabled?0x40:0);
 }
  
 void clearJoyBus() {
@@ -23,28 +25,28 @@ void clearJoyBus() {
 }
 
 void waitJoyBusSendCmd() {
-	while((REG_HS_CTRL&JOY_SEND) == 0) ;
+	while((REG_HS_CTRL&JOYCNT_SEND) == 0) ;
 }
 
 void waitJoyBusRecvCmd() {
-	while((REG_HS_CTRL&JOY_RECV) == 0) ;
+	while((REG_HS_CTRL&JOYCNT_RECV) == 0) ;
 }
 
 void sendJoyBus(u32 data) {
+	if(REG_HS_CTRL&JOYCNT_SEND) {
+		iprintf("Send missed deadline!\n");
+	}
 	iprintf("S:%lx", data);
 	REG_JOYTR=data;
 	waitJoyBusSendCmd();
-	REG_HS_CTRL |= JOY_SEND;
+	REG_HS_CTRL |= JOYCNT_SEND;
 }
 
 u32 recvJoyBus() {
 	waitJoyBusRecvCmd();
-	return recvJoyBusNoWait();
-}
-
-u32 recvJoyBusNoWait() {
+	
 	u32 val = REG_JOYRE;
-	REG_HS_CTRL |= JOY_RECV;
+	REG_HS_CTRL |= JOYCNT_RECV;
 	iprintf("R:%lx", val);
 	return val;
 }
@@ -63,14 +65,14 @@ void recvJoyBusBuff(u8 *data, int len) {
 	}
 }
 
-bool isJoyBusRecvPending(u8 status) {
-	return status&JOY_RECV;
+bool isJoyBusRecvPending() {
+	return REG_HS_CTRL&JOYCNT_RECV;
 }
 
-bool isJoyBusSendPending(u8 status) {
-	return status&JOY_SEND;
+bool isJoyBusSendPending() {
+	return REG_HS_CTRL&JOYCNT_SEND;
 }
 
-bool isJoyBusResetPending(u8 status) {
-	return status&JOY_RESET;
+bool isJoyBusResetPending() {
+	return REG_HS_CTRL&JOYCNT_RESET;
 }

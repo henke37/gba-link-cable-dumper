@@ -14,4 +14,6 @@ int isGbaConnected(s32 chan);
 u32 recvBuffFromGba(s32 chan, u8 *buff, int len);
 void sendBuffToGba(s32 chan, const u8 *buff, int len);
 
+u8 getExtaGbaStatus(s32 chan);
+
 #endif

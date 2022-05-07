@@ -14,7 +14,14 @@
 //safe si transfer delay in between calls
 #define SI_TRANS_DELAY 50
 
+#define JOYSTAT_SEND 8
+#define JOYSTAT_RECV 1
+
 u8 *resbuf,*cmdbuf;
+vu8 gbaStatus[4];
+
+void waitGbaReadSentData(s32 chan);
+void waitGbaSetDataToRecv(s32 chan);
 
 volatile u32 transval = 0;
 void transcb(s32 chan, u32 ret)
@@ -50,6 +57,8 @@ void resetGba(s32 chan)
 	transval = 0;
 	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
+	
+	gbaStatus[chan]=resbuf[2];
 }
 void getGbaStatus(s32 chan)
 {
@@ -57,15 +66,24 @@ void getGbaStatus(s32 chan)
 	transval = 0;
 	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
+	
+	gbaStatus[chan]=resbuf[2];
 }
 u32 recvFromGbaRaw(s32 chan)
 {
+	waitGbaSetDataToRecv(chan);
+	
+	u32 recvData;
 	memset(resbuf,0,32);
 	cmdbuf[0]=0x14; //read
 	transval = 0;
 	SI_Transfer(chan,cmdbuf,1,resbuf,5,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
-	return *(vu32*)resbuf;
+	
+	recvData=*(vu32*)resbuf;
+	gbaStatus[chan]=resbuf[4];
+	
+	return recvData;
 }
 u32 recvFromGba(s32 chan) {
 	return __builtin_bswap32(recvFromGbaRaw(chan));
@@ -81,6 +99,9 @@ void sendToGba(s32 chan, u32 msg) {
 	resbuf[0] = 0;
 	SI_Transfer(chan,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
+	gbaStatus[chan]=resbuf[0];
+	
+	waitGbaReadSentData(chan);
 }
 
 void sendToGbaRaw(s32 chan, const u8 *buff) {
@@ -93,6 +114,9 @@ void sendToGbaRaw(s32 chan, const u8 *buff) {
 	resbuf[0] = 0;
 	SI_Transfer(chan,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
+	gbaStatus[chan]=resbuf[0];
+	
+	waitGbaReadSentData(chan);
 }
 
 u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
@@ -112,4 +136,22 @@ void sendBuffToGba(s32 chan, const u8 *buff, int len) {
 	int i;
 	for(i = 0; i < len; i+=4)
 		sendToGba(chan,__builtin_bswap32(*(vu32*)(buff+i)));
+}
+
+
+void waitGbaReadSentData(s32 chan) {
+	printf("WR: %x ",gbaStatus[chan]);
+	while((gbaStatus[chan] & JOYSTAT_SEND)==0) {
+		getGbaStatus(chan);
+	}
+}
+void waitGbaSetDataToRecv(s32 chan) {
+	printf("SR: %x ",gbaStatus[chan]);
+	while((gbaStatus[chan] & JOYSTAT_RECV)==JOYSTAT_RECV) {
+		getGbaStatus(chan);
+	}
+}
+
+u8 getExtaGbaStatus(s32 chan) {
+	return gbaStatus[chan] & 0x30;
 }

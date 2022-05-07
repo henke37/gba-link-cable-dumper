@@ -54,8 +54,8 @@ int main(void) {
 	
 	// ansi escape sequence to set print co-ordinates
 	// /x1b[line;columnH	
-	iprintf("\x1b[9;2HGBA Link Cable Dumper v1.6\n");
-	iprintf("\x1b[10;4HPlease look at the TV\n");
+	//iprintf("\x1b[9;2HGBA Link Cable Dumper v1.6\n");
+	//iprintf("\x1b[10;4HPlease look at the TV\n");
 	
 	// disable this, needs power
 	SNDSTAT = 0;
@@ -64,7 +64,9 @@ int main(void) {
 	// Set up waitstates for EEPROM access etc. 
 	REG_WAITCNT = 0x0317;
 	
-	configureJoyBus(true);
+	iprintf("Init:%#0x %#0x %#0lx\n",REG_HS_CTRL, REG_JSTAT, REG_JOYRE);
+	
+	enableJoyBusIRQ(true);
 	
 	while (1) {
 		Halt();
@@ -73,29 +75,23 @@ int main(void) {
 
 void sioHandler() {
 	
-	u8 status=REG_HS_CTRL & 7;
-	REG_HS_CTRL = 0;
+	enableJoyBusIRQ(false);
  
-	iprintf("IRQ: %#0x %#0x!\n",status, REG_JSTAT);
-	if(isJoyBusRecvPending(status)) {
-		u32 type=recvJoyBusNoWait();
+	iprintf("IRQ: %#0x %#0x!\n",REG_HS_CTRL, REG_JSTAT);
+	if(isJoyBusRecvPending()) {
+		u32 type=recvJoyBus();
 		handlePacket(type);
 	}
-	if(isJoyBusSendPending(status)) {
+	if(isJoyBusSendPending()) {
 		iprintf("Spurious send?\n");
 	}
-	if(isJoyBusResetPending(status)) {
+	if(isJoyBusResetPending()) {
 		iprintf("Reset.\n");
 		RegisterRamReset(RESET_SIO);
 		SystemCall(0x26); 
 	}
-	if(status==0) {
-		iprintf("Spurious SIO IRQ?\n");
-	}
 	
-	REG_HS_CTRL = status;
-	
-	REG_HS_CTRL=0x40;
+	enableJoyBusIRQ(true);
 }
 
 void handlePacket(u32 type) {
