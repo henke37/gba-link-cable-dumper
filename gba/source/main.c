@@ -100,9 +100,11 @@ void handlePacket(u32 type) {
 			iprintf("Got a ping!\n");
 			sendJoyBus(recvJoyBus());
 		} break;
+		
 		case READ_PAD: {
 			sendJoyBus(REG_KEYINPUT);
 		} break;
+		
 		case CHECK_GAME: {
 			iprintf("Checking game...\n");
 			s32 gamesize = getGameSize();
@@ -110,23 +112,16 @@ void handlePacket(u32 type) {
 			sendJoyBus(gamesize);
 			sendJoyBus(savesize);
 		} break;
-		
-		case READ_HEADER: {
-			//game in, send header
-			iprintf("Reading rom header.\n");
-			sendJoyBusBuff(ROM_DATA, ROM_HEADER_LEN);
-		} break;
 			
 		case READ_ROM:	{
-			iprintf("Dumping rom (take a walk).\n");
-			s32 gamesize = getGameSize();
+			u32 offset = recvJoyBus();
+			u32 length = recvJoyBus();
 			//disable interrupts
 			u32 prevIrqMask = REG_IME;
 			REG_IME = 0;
-			//dump the game
-			sendJoyBusBuff(ROM_DATA, gamesize);
+			sendJoyBusBuff(ROM_DATA+offset, length);
 			
-			sendJoyBus(gamesize);
+			sendJoyBus(length);
 			//restore interrupts
 			REG_IME = prevIrqMask;
 		} break;

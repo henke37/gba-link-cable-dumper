@@ -50,6 +50,8 @@ void backupSave();
 void restoreSave();
 void clearSave();
 
+void readRom(u8 *buff,u32 offset, u32 len);
+
 int fileExists(const char *fileName);
 
 void endproc()
@@ -250,13 +252,12 @@ void handleGbaCart() {
 		return;
 	}
 	
-	sendToGba(gbaChan, READ_HEADER);
-	recvBuffFromGba(gbaChan, testdump, 0xC0);
+	readRom(testdump,0x0A,0xC0);
 		
 	//print out all the info from the  game
-	printf("Game Name: %.12s\n",(char*)(testdump+0xA0));
-	printf("Game ID: %.4s\n",(char*)(testdump+0xAC));
-	printf("Company ID: %.2s\n",(char*)(testdump+0xB0));
+	printf("Game Name: %.12s\n",(char*)(testdump));
+	printf("Game ID: %.4s\n",(char*)(testdump+0x0C));
+	printf("Company ID: %.2s\n",(char*)(testdump+0xA0));
 	printf("ROM Size: %02.02f MB\n",((float)(gbasize/1024))/1024.f);
 	if(savesize > 0)
 		printf("Save Size: %02.02f KB\n \n",((float)(savesize))/1024.f);
@@ -265,11 +266,11 @@ void handleGbaCart() {
 		
 	//generate file paths
 	sprintf(romFile,"/dumps/%.12s [%.4s%.2s].gba",
-		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
+		(char*)(testdump),(char*)(testdump+0x0C),(char*)(testdump+0xB0));
 	fixFName(romFile+7); //fix name behind "/dumps/"
 	
 	sprintf(saveFile,"/dumps/%.12s [%.4s%.2s].sav",
-		(char*)(testdump+0xA0),(char*)(testdump+0xAC),(char*)(testdump+0xB0));
+		(char*)(testdump),(char*)(testdump+0x0C),(char*)(testdump+0xB0));
 	fixFName(saveFile+7); //fix name behind "/dumps/"
 	
 	int romExists = fileExists(romFile);
@@ -315,6 +316,17 @@ void handleGbaCart() {
 		} else if((btns & (PAD_TRIGGER_L | PAD_TRIGGER_R))==(PAD_TRIGGER_L | PAD_TRIGGER_R)) {
 			clearSave();
 		}
+	}
+}
+
+void readRom(u8 *buff,u32 offset, u32 len) {
+	sendToGba(gbaChan, READ_ROM);
+	sendToGba(gbaChan, offset);
+	sendToGba(gbaChan, len);
+	recvBuffFromGba(gbaChan, testdump, len);
+	u32 readBytes=recvFromGba(gbaChan);
+	if(readBytes!=len) {
+		fatalError("Read rom size missmatch!");
 	}
 }
 
