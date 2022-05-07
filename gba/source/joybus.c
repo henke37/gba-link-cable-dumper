@@ -17,7 +17,7 @@
 #define JOYSTAT_SEND 8
 
 void enableJoyBusIRQ(bool enabled) {
-	REG_HS_CTRL = (REG_HS_CTRL & ~0x40) | (enabled?0x40:0);
+	REG_HS_CTRL = enabled?0x40:0;
 }
  
 void clearJoyBus() {

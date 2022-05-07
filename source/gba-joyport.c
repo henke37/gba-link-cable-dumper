@@ -15,7 +15,7 @@
 #define SI_TRANS_DELAY 50
 
 #define JOYSTAT_SEND 8
-#define JOYSTAT_RECV 1
+#define JOYSTAT_RECV 2
 
 u8 *resbuf,*cmdbuf;
 vu8 gbaStatus[4];
@@ -69,10 +69,10 @@ void getGbaStatus(s32 chan)
 	
 	gbaStatus[chan]=resbuf[2];
 }
-u32 recvFromGbaRaw(s32 chan)
-{
+u32 recvFromGbaRaw(s32 chan) {
+
 	waitGbaSetDataToRecv(chan);
-	
+		
 	u32 recvData;
 	memset(resbuf,0,32);
 	cmdbuf[0]=0x14; //read
@@ -140,14 +140,13 @@ void sendBuffToGba(s32 chan, const u8 *buff, int len) {
 
 
 void waitGbaReadSentData(s32 chan) {
-	printf("WR: %x ",gbaStatus[chan]);
-	while((gbaStatus[chan] & JOYSTAT_SEND)==0) {
+	while((gbaStatus[chan] & JOYSTAT_RECV)==JOYSTAT_RECV) {
 		getGbaStatus(chan);
 	}
 }
 void waitGbaSetDataToRecv(s32 chan) {
-	printf("SR: %x ",gbaStatus[chan]);
 	while((gbaStatus[chan] & JOYSTAT_RECV)==JOYSTAT_RECV) {
+	while((gbaStatus[chan] & JOYSTAT_SEND)==0) {
 		getGbaStatus(chan);
 	}
 }

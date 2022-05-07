@@ -64,7 +64,7 @@ int main(void) {
 	// Set up waitstates for EEPROM access etc. 
 	REG_WAITCNT = 0x0317;
 	
-	iprintf("Init:%#0x %#0x %#0lx\n",REG_HS_CTRL, REG_JSTAT, REG_JOYRE);
+	iprintf("Init:%#0x %#0x\n",REG_HS_CTRL, REG_JSTAT);
 	
 	enableJoyBusIRQ(true);
 	
