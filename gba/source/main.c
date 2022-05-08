@@ -119,6 +119,17 @@ void handlePacket(u32 type) {
 			sendJoyBusBuff(save_data, 40);
 		} break;
 		
+		case TST_SENDBUF: {
+			memset(save_data,0,40);
+			recvJoyBusBuff(save_data, 40);
+			for(int i=0;i<40;++i) {
+				if(save_data[i]!=i) {
+					iprintf("TST_SENDBUF FAIL!");
+					break;
+				}
+			}
+		} break;
+		
 		case READ_PAD: {
 			sendJoyBus(REG_KEYINPUT);
 		} break;

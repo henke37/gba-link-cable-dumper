@@ -450,4 +450,10 @@ void testComs() {
 	for(i=0;i<40;++i) {
 		if(testdump[i]!=i) fatalError("TST_READBUF Failed!");
 	}
+	
+	sendToGba(gbaChan, TST_SENDBUF);
+	for(int i=0;i<40;++i) {
+		testdump[i]=i;
+	}
+	sendBuffToGba(gbaChan, testdump, 40);
 }
