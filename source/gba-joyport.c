@@ -141,14 +141,17 @@ void sendBuffToGba(s32 chan, const u8 *buff, int len) {
 
 void waitGbaReadSentData(s32 chan) {
 	while((gbaStatus[chan] & JOYSTAT_RECV)==JOYSTAT_RECV) {
+		printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
 		getGbaStatus(chan);
 	}
+	printf("\x1b[s\x1b[1;60HWR: OK\x1b[u");
 }
 void waitGbaSetDataToRecv(s32 chan) {
-	while((gbaStatus[chan] & JOYSTAT_RECV)==JOYSTAT_RECV) {
 	while((gbaStatus[chan] & JOYSTAT_SEND)==0) {
+		printf("\x1b[s\x1b[1;60HWS: %x\x1b[u",gbaStatus[chan]);
 		getGbaStatus(chan);
 	}
+	printf("\x1b[s\x1b[1;60HWS: OK\x1b[u");
 }
 
 u8 getExtaGbaStatus(s32 chan) {
