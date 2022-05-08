@@ -182,6 +182,9 @@ int main(int argc, char *argv[])
 			fatalError("Ping failure!");
 		}
 		
+		sendToGba(gbaChan, PONG);
+		sendToGba(gbaChan, recvFromGba(gbaChan));
+		
 		while(1)
 		{
 			printmain();

@@ -103,6 +103,13 @@ void handlePacket(u32 type) {
 			iprintf("Got a ping!\n");
 			sendJoyBus(recvJoyBus());
 		} break;
+		case PONG: {
+			iprintf("PONG\n");
+			sendJoyBus(4321);
+			if(recvJoyBus()!=4321) {
+				iprintf("FAIL!");
+			}
+		} break;
 		
 		case READ_PAD: {
 			sendJoyBus(REG_KEYINPUT);
@@ -119,14 +126,17 @@ void handlePacket(u32 type) {
 		case READ_ROM:	{
 			u32 offset = recvJoyBus();
 			u32 length = recvJoyBus();
+			const u8* addr=ROM_DATA+offset;
+			iprintf("ROMREAD: %p %lu ",addr,length);
 			//disable interrupts
 			u32 prevIrqMask = REG_IME;
 			REG_IME = 0;
-			sendJoyBusBuff(ROM_DATA+offset, length);
+			sendJoyBusBuff(addr, length);
 			
 			sendJoyBus(length);
 			//restore interrupts
 			REG_IME = prevIrqMask;
+			iprintf("ROMREAD OK ");
 		} break;
 		
 		case READ_SAVE: {
