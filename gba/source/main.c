@@ -104,11 +104,19 @@ void handlePacket(u32 type) {
 			sendJoyBus(recvJoyBus());
 		} break;
 		case PONG: {
-			iprintf("PONG\n");
+			iprintf("PONG ");
 			sendJoyBus(4321);
 			if(recvJoyBus()!=4321) {
 				iprintf("FAIL!");
 			}
+			iprintf("OK!");
+		} break;
+		
+		case TST_READBUF: {
+			for(int i=0;i<40;++i) {
+				save_data[i]=i;
+			}
+			sendJoyBusBuff(save_data, 40);
 		} break;
 		
 		case READ_PAD: {

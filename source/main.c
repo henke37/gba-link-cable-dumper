@@ -50,6 +50,8 @@ void backupSave();
 void restoreSave();
 void clearSave();
 
+void testComs();
+
 void readRom(u8 *buff,u32 offset, u32 len);
 
 int fileExists(const char *fileName);
@@ -176,14 +178,7 @@ int main(int argc, char *argv[])
 		printf("Done!\n");
 		sleep(2);
 		
-		sendToGba(gbaChan, PING);
-		sendToGba(gbaChan, 1234);
-		if(recvFromGba(gbaChan)!=1234) {
-			fatalError("Ping failure!");
-		}
-		
-		sendToGba(gbaChan, PONG);
-		sendToGba(gbaChan, recvFromGba(gbaChan));
+		testComs();
 		
 		while(1)
 		{
@@ -437,4 +432,22 @@ void clearSave() {
 
 int fileExists(const char *fileName) {
 	return access(fileName, F_OK);
+}
+
+void testComs() {
+	int i;
+	sendToGba(gbaChan, PING);
+	sendToGba(gbaChan, 1234);
+	if(recvFromGba(gbaChan)!=1234) {
+		fatalError("Ping failure!");
+	}
+	
+	sendToGba(gbaChan, PONG);
+	sendToGba(gbaChan, recvFromGba(gbaChan));
+	
+	sendToGba(gbaChan, TST_READBUF);
+	recvBuffFromGba(gbaChan, testdump, 42);
+	for(i=0;i<40;++i) {
+		if(testdump[i]!=i) fatalError("TST_READBUF Failed!");
+	}
 }
