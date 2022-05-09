@@ -112,11 +112,13 @@ void handlePacket(u32 type) {
 			sendJoyBus(4321);
 			if(recvJoyBus()!=4321) {
 				iprintf("FAIL!");
+			} else {
+				iprintf("OK!");
 			}
-			iprintf("OK!");
 		} break;
 		
 		case TST_READBUF: {
+			iprintf("TST_RB");
 			for(int i=0;i<40;++i) {
 				save_data[i]=i;
 			}
@@ -124,14 +126,16 @@ void handlePacket(u32 type) {
 		} break;
 		
 		case TST_SENDBUF: {
+			iprintf("TST_SB ");
 			memset(save_data,0,40);
 			recvJoyBusBuff(save_data, 40);
 			for(int i=0;i<40;++i) {
 				if(save_data[i]!=i) {
-					iprintf("TST_SENDBUF FAIL!");
+					iprintf("FAIL!");
 					break;
 				}
 			}
+			iprintf("PASS");
 		} break;
 		
 		case READ_PAD: {

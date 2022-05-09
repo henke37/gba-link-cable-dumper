@@ -450,6 +450,8 @@ void testComs() {
 	recvBuffFromGba(gbaChan, testdump, 40);
 	for(int i=0;i<40;++i) {
 		printf("%02d",testdump[i]);
+	}
+	for(int i=0;i<40;++i) {
 		if(testdump[i]!=i) fatalError("Failed!");
 	}
 	printf("Pass.\n");
