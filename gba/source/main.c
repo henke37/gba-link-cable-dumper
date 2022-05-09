@@ -79,6 +79,8 @@ int main(void) {
 void sioHandler() {
 	
 	enableJoyBusIRQ(false);
+	
+	do {
  
 	iprintf("IRQ: %#0x %#0x!\n",REG_HS_CTRL, REG_JSTAT);
 	if(isJoyBusRecvPending()) {
@@ -93,6 +95,8 @@ void sioHandler() {
 		RegisterRamReset(RESET_SIO);
 		rebootSystem();
 	}
+	
+	} while(isJoyBusAnyPending());
 	
 	enableJoyBusIRQ(true);
 }

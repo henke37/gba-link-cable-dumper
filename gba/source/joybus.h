@@ -3,6 +3,7 @@
 
 void enableJoyBusIRQ(bool enabled);
 
+bool isJoyBusAnyPending();
 bool isJoyBusRecvPending();
 bool isJoyBusSendPending();
 bool isJoyBusResetPending();
