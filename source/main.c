@@ -435,7 +435,6 @@ int fileExists(const char *fileName) {
 }
 
 void testComs() {
-	int i;
 	sendToGba(gbaChan, PING);
 	sendToGba(gbaChan, 1234);
 	if(recvFromGba(gbaChan)!=1234) {
@@ -445,15 +444,21 @@ void testComs() {
 	sendToGba(gbaChan, PONG);
 	sendToGba(gbaChan, recvFromGba(gbaChan));
 	
+	printf("Send TST_READBUF packet. ");
 	sendToGba(gbaChan, TST_READBUF);
-	recvBuffFromGba(gbaChan, testdump, 42);
-	for(i=0;i<40;++i) {
-		if(testdump[i]!=i) fatalError("TST_READBUF Failed!");
+	printf("Recv buff ");
+	recvBuffFromGba(gbaChan, testdump, 40);
+	for(int i=0;i<40;++i) {
+		printf("%02d",testdump[i]);
+		if(testdump[i]!=i) fatalError("Failed!");
 	}
+	printf("Pass.\n");
 	
+	printf("Send TST_SENDBUF packet. ");
 	sendToGba(gbaChan, TST_SENDBUF);
 	for(int i=0;i<40;++i) {
 		testdump[i]=i;
 	}
+	printf("Send buff.\n");
 	sendBuffToGba(gbaChan, testdump, 40);
 }
