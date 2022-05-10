@@ -250,7 +250,7 @@ void handleGbaCart() {
 		return;
 	}
 	
-	readRom(testdump,0x0A,0xC0);
+	readRom(testdump,0x00A0,0xC0);
 		
 	//print out all the info from the  game
 	printf("Game Name: %.12s\n",(char*)(testdump));
