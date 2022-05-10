@@ -18,6 +18,8 @@ char saveFile[64];
 
 void fixFName(char *str);
 
+void clearScreen();
+
 void printBanner() {
 	printf("\x1b[2J");
 	printf("\x1b[37m");
@@ -34,13 +36,14 @@ void handleGbaCart() {
 	gbasize = recvFromGba(gbaChan);
 	savesize = recvFromGba(gbaChan);
 	
-	if(gbasize == -1) 
-	{
+	if(gbasize == -1) {
 		warnError("ERROR: No (Valid) GBA Card inserted!\n");
 		return;
 	}
 	
 	readRom(testdump,0x00A0,0xC0);
+	
+	clearScreen();
 	
 	const char *gameName=(const char*)testdump;
 	const char *gameId=(const char*)(testdump+0x0C);
@@ -134,20 +137,23 @@ void waitGbaConnect() {
 
 void preDumpMenu() {
 	while(1) {
+		clearScreen();
 		printf("Press A once you have a GBA Game inserted.\n");
 		printf("Press Y to backup the GBA BIOS.\n \n");
-		PAD_ScanPads();
-		VIDEO_WaitVSync();
 		
-		u32 btns = PAD_ButtonsDown(0);
-		if(btns&PAD_BUTTON_START) {
-			endproc();
-		} else if(btns&PAD_BUTTON_A) {
-			handleGbaCart();
-		} else if(btns&PAD_BUTTON_Y) {
-			dumpGbaBios();
+		while(1) {
+			PAD_ScanPads();
+			VIDEO_WaitVSync();
+			
+			u32 btns = PAD_ButtonsDown(0);
+			if(btns&PAD_BUTTON_START) {
+				endproc();
+			} else if(btns&PAD_BUTTON_A) {
+				handleGbaCart();
+			} else if(btns&PAD_BUTTON_Y) {
+				dumpGbaBios();
+			}
 		}
-	
 	}
 }
 
@@ -194,4 +200,8 @@ void fixFName(char *str) {
 				break;
 		}
 	}
+}
+
+void clearScreen() {
+	printf("\x1b[1J\x1b[1;0H");
 }
