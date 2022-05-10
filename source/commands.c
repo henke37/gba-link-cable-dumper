@@ -82,11 +82,6 @@ void dumpRom() {
 	}
 	printf("\nClosing file\n");
 	fclose(f);
-	
-	size_t readCnt=recvFromGba(gbaChan);
-	if(readCnt!=gbasize) {
-		fatalError("Read size desync!\n");
-	}
 	printf("Game dumped.\n");
 	sleep(5);
 }
