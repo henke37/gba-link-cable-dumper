@@ -439,7 +439,7 @@ void clearSave() {
 }
 
 int fileExists(const char *fileName) {
-	return access(fileName, F_OK);
+	return access(fileName, F_OK)==0;
 }
 
 void testComs() {
