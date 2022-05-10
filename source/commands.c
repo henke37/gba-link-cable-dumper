@@ -67,21 +67,24 @@ void dumpRom() {
 	if(!f)
 		fatalError("ERROR: Could not create file! Exit...");
 	printf("Dumping...\n");
-	sendToGba(gbaChan, READ_ROM);
-	while(gbasize > 0)
-	{
-		int toread = (gbasize > 0x400000 ? 0x400000 : gbasize);
+	
+	int offset=0;
+	while(offset < gbasize) {
+		int toRead = gbasize-offset;
+		if(toRead > readBuffSize) toRead= readBuffSize;
 		
-		recvBuffFromGba(gbaChan, testdump, toread);
+		readRom(testdump, offset, toRead);
 		
-		fwrite(testdump,1,toread,f);
-		gbasize -= toread;
+		fwrite(testdump,1,toRead,f);
+		offset += toRead;
+		
+		printf("\r%02.02f MB done",(float)(offset/1024)/1024.f);
 	}
 	printf("\nClosing file\n");
 	fclose(f);
 	
 	size_t readCnt=recvFromGba(gbaChan);
-	if(readCnt!=savesize) {
+	if(readCnt!=gbasize) {
 		fatalError("Read size desync!\n");
 	}
 	printf("Game dumped.\n");

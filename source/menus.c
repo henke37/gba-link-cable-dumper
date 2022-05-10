@@ -68,8 +68,8 @@ void handleGbaCart() {
 		romHeader.gameName, romHeader.gameId, romHeader.makerId);
 	fixFName(saveFile+7); //fix name behind "/dumps/"
 	
-	int romExists = fileExists(romFile);
-	int saveExists = fileExists(saveFile);
+	bool romExists = false;//fileExists(romFile);
+	bool saveExists = fileExists(saveFile);
 	
 	//let the user choose the option
 	if(!romExists){

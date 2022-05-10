@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	PAD_Init();
 	initGbaJoyport();
 	
-	testdump = memalign(32,0x400000);
+	testdump = memalign(32, readBuffSize);
 	if(!testdump) return 0;
 	
 	printBanner();

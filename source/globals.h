@@ -6,6 +6,7 @@
 extern char romFile[64];
 extern char saveFile[64];
 
+#define readBuffSize 0x400000
 
 extern u8 *testdump;
 

@@ -125,8 +125,6 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	for(j = 0; j < len; j+=4) {
 		*(vu32*)(buff+j) = recvFromGbaRaw(chan);
 		bytes_read+=4;
-		if((bytes_read&0xFFFF) == 0)
-			printf("\r%02.02f MB done",(float)(bytes_read/1024)/1024.f);
 	}
 	
 	return bytes_read;
