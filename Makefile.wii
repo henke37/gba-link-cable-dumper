@@ -124,7 +124,7 @@ $(OUTPUT).elf: $(OFILES)
 	@echo $(notdir $<)
 	$(bin2o)
 	
-main.o : gba_mb_gba.h
+commands.o : gba_mb_gba.h
 
 -include $(DEPENDS)
 
