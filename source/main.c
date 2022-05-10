@@ -251,11 +251,15 @@ void handleGbaCart() {
 	}
 	
 	readRom(testdump,0x00A0,0xC0);
+	
+	const char *gameName=(const char*)testdump;
+	const char *gameId=(const char*)(testdump+0x0C);
+	const char *makerId=(const char*)(testdump+0x10);
 		
 	//print out all the info from the  game
-	printf("Game Name: %.12s\n",(char*)(testdump));
-	printf("Game ID: %.4s\n",(char*)(testdump+0x0C));
-	printf("Company ID: %.2s\n",(char*)(testdump+0xA0));
+	printf("Game Name: %.12s\n",gameName);
+	printf("Game ID: %.4s\n",gameId);
+	printf("Company ID: %.2s\n",makerId);
 	printf("ROM Size: %02.02f MB\n",((float)(gbasize/1024))/1024.f);
 	if(savesize > 0)
 		printf("Save Size: %02.02f KB\n \n",((float)(savesize))/1024.f);
@@ -264,11 +268,11 @@ void handleGbaCart() {
 		
 	//generate file paths
 	sprintf(romFile,"/dumps/%.12s [%.4s%.2s].gba",
-		(char*)(testdump),(char*)(testdump+0x0C),(char*)(testdump+0xB0));
+		gameName, gameId, makerId);
 	fixFName(romFile+7); //fix name behind "/dumps/"
 	
 	sprintf(saveFile,"/dumps/%.12s [%.4s%.2s].sav",
-		(char*)(testdump),(char*)(testdump+0x0C),(char*)(testdump+0xB0));
+		gameName, gameId, makerId);
 	fixFName(saveFile+7); //fix name behind "/dumps/"
 	
 	int romExists = fileExists(romFile);
