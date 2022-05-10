@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include <unistd.h>
 
+#include "globals.h"
+
 bool dirExists(const char *path) {
 	DIR *dir;
 	dir = opendir(path);
@@ -19,8 +21,8 @@ bool fileExists(const char *fileName) {
 	return access(fileName, F_OK)==0;
 }
 
-bool hasSpecialHardware(const char *gameId) {
-	switch(*gameId) {
+bool hasSpecialHardware() {
+	switch(romHeader.gameId[0]) {
 		case 'A':
 		case 'B':
 		case 'C':
@@ -32,7 +34,7 @@ bool hasSpecialHardware(const char *gameId) {
 		case 'V':
 			return true;
 		case 'P':
-			return strncmp(gameId, "PASS", 4) !=0;
+			return strncmp(romHeader.gameId, "PASS", 4) !=0;
 		default:
 			return true;
 	}

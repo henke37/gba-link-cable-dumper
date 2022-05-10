@@ -28,6 +28,8 @@ s32 gbaChan=1;
 int gbasize=0;
 u32 savesize=0;
 
+romHeaderT romHeader;
+
 const char *biosname = "/dumps/gba_bios.bin";
 
 int main(int argc, char *argv[]) 

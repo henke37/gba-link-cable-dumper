@@ -20,6 +20,10 @@ void fixFName(char *str);
 
 void clearScreen();
 
+void specialHWMenu();
+void ereaderMenu();
+void rtcAndUvMenu();
+
 void printBanner() {
 	printf("\x1b[2J");
 	printf("\x1b[37m");
@@ -41,18 +45,14 @@ void handleGbaCart() {
 		return;
 	}
 	
-	readRom(testdump,0x00A0,0xC0);
+	readRom(((void*)&romHeader),0x00A0,sizeof(romHeader));
 	
 	clearScreen();
-	
-	const char *gameName=(const char*)testdump;
-	const char *gameId=(const char*)(testdump+0x0C);
-	const char *makerId=(const char*)(testdump+0x10);
 		
 	//print out all the info from the  game
-	printf("Game Name: %.12s\n",gameName);
-	printf("Game ID: %.4s\n",gameId);
-	printf("Company ID: %.2s\n",makerId);
+	printf("Game Name: %.12s\n",romHeader.gameName);
+	printf("Game ID: %.4s\n",romHeader.gameId);
+	printf("Company ID: %.2s\n",romHeader.makerId);
 	printf("ROM Size: %02.02f MB\n",((float)(gbasize/1024))/1024.f);
 	if(savesize > 0)
 		printf("Save Size: %02.02f KB\n \n",((float)(savesize))/1024.f);
@@ -61,11 +61,11 @@ void handleGbaCart() {
 		
 	//generate file paths
 	sprintf(romFile,"/dumps/%.12s [%.4s%.2s].gba",
-		gameName, gameId, makerId);
+		romHeader.gameName, romHeader.gameId, romHeader.makerId);
 	fixFName(romFile+7); //fix name behind "/dumps/"
 	
 	sprintf(saveFile,"/dumps/%.12s [%.4s%.2s].sav",
-		gameName, gameId, makerId);
+		romHeader.gameName, romHeader.gameId, romHeader.makerId);
 	fixFName(saveFile+7); //fix name behind "/dumps/"
 	
 	int romExists = fileExists(romFile);
@@ -87,7 +87,8 @@ void handleGbaCart() {
 		}
 		printf("Press L+R to clear the save file on the GBA Cartridge.\n");
 	}
-	if(hasSpecialHardware(gameId)) {
+	if(hasSpecialHardware()) {
+		printf("Press Z for additional options.\n");
 	}
 	printf("\n");
 	
@@ -112,6 +113,8 @@ void handleGbaCart() {
 			restoreSave();
 		} else if((btns & (PAD_TRIGGER_L | PAD_TRIGGER_R))==(PAD_TRIGGER_L | PAD_TRIGGER_R)) {
 			clearSave();
+		} else if(btns & PAD_TRIGGER_Z) {
+			specialHWMenu();
 		}
 	}
 }
@@ -155,6 +158,27 @@ void preDumpMenu() {
 			}
 		}
 	}
+}
+
+void specialHWMenu() {
+	switch(romHeader.gameId[0]) {
+		case 'P'://ereader
+			ereaderMenu();
+			break;
+		case 'U'://RTC & UV
+			rtcAndUvMenu();
+			break;
+		case 'K'://accl
+		case 'R'://gyro & rumble
+		case 'V'://Rumble
+		default:
+			printf("Not implemented.\n");
+	}
+}
+
+void ereaderMenu() {
+}
+void rtcAndUvMenu() {
 }
 
 void warnError(char *msg) {

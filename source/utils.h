@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-bool hasSpecialHardware(const char *gameId);
+bool hasSpecialHardware();
 
 bool fileExists(const char *fileName);
 bool dirExists(const char *path);

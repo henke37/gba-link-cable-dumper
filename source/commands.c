@@ -53,7 +53,7 @@ void readRom(u8 *buff,u32 offset, u32 len) {
 	sendToGba(gbaChan, READ_ROM);
 	sendToGba(gbaChan, offset);
 	sendToGba(gbaChan, len);
-	recvBuffFromGba(gbaChan, testdump, len);
+	recvBuffFromGba(gbaChan, buff, len);
 	u32 readBytes=recvFromGba(gbaChan);
 	if(readBytes!=len) {
 		fatalError("Read rom size missmatch!");
