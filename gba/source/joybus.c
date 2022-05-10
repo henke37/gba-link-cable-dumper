@@ -32,7 +32,7 @@ void sendJoyBus(u32 data) {
 	if(REG_HS_CTRL&JOYCNT_SEND) {
 		iprintf("Send missed deadline!\n");
 	}
-	iprintf("S:%lx", data);
+	//iprintf("S:%lx", data);
 	REG_JOYTR=data;
 	waitJoyBusSendCmd();
 	REG_HS_CTRL |= JOYCNT_SEND;
@@ -43,7 +43,7 @@ u32 recvJoyBus() {
 	
 	u32 val = REG_JOYRE;
 	REG_HS_CTRL |= JOYCNT_RECV;
-	iprintf("R:%lx", val);
+	//iprintf("R:%lx", val);
 	return val;
 }
 
