@@ -52,6 +52,8 @@ void clearSave();
 
 void testComs();
 
+bool hasSpecialHardware(const char *gameId);
+
 void readRom(u8 *buff,u32 offset, u32 len);
 
 int fileExists(const char *fileName);
@@ -294,6 +296,8 @@ void handleGbaCart() {
 		}
 		printf("Press L+R to clear the save file on the GBA Cartridge.\n");
 	}
+	if(hasSpecialHardware(gameId)) {
+	}
 	printf("\n");
 	
 	while(1)
@@ -467,4 +471,23 @@ void testComs() {
 	}
 	printf("Send buff.\n");
 	sendBuffToGba(gbaChan, testdump, 40);
+}
+
+bool hasSpecialHardware(const char *gameId) {
+	switch(*gameId) {
+		case 'A':
+		case 'B':
+		case 'C':
+		case 'F':
+			return false;
+		case 'K':
+		case 'R':
+		case 'U':
+		case 'V':
+			return true;
+		case 'P':
+			return strncmp(gameId, "PASS", 4) !=0;
+		default:
+			return true;
+	}
 }
