@@ -251,6 +251,9 @@ void gyroAndRumbleMenu() {
 			PAD_ScanPads();
 			VIDEO_WaitVSync();
 			
+			u16 gyro=readGyro();
+			printf("\rGyro: %.4hx", gyro);
+			
 			u32 btns = PAD_ButtonsDown(0);
 			if(btns&PAD_BUTTON_START) {
 				endproc();

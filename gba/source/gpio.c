@@ -6,13 +6,15 @@
 #define GPIO_DIR  *((vu16*)0x80000C6)
 #define GPIO_CTRL *((vu16*)0x80000C8)
 
+#define RUMBLE_FLAG 0x08
+
 void rtcRead();
 void rtcWrite();
 
 void solarRead();
 void setRumble(bool active) {
 	GPIO_DIR=0x0B;
-	GPIO_DATA=(GPIO_DATA & ~0x08) | (active?0x08:0);
+	GPIO_DATA=(GPIO_DATA & ~RUMBLE_FLAG) | (active?RUMBLE_FLAG:0);
 }
 
 void readTilt();
@@ -20,10 +22,11 @@ void readTilt();
 u16 readGyro() {
 	GPIO_DIR=0x0B;
 	
-	u16 rumbleBit = (GPIO_DATA & 0x08);
+	u16 rumbleBit = (GPIO_DATA & RUMBLE_FLAG);
 	
 	//Start conversion
 	GPIO_DATA = rumbleBit | 0x01;
+	GPIO_DATA = rumbleBit;
 	
 	u16 val=0;
 	

@@ -206,3 +206,8 @@ void setRumble(bool active) {
 	sendToGba(gbaChan, RUMBLE);
 	sendToGba(gbaChan, active);
 }
+
+u16 readGyro() {
+	sendToGba(gbaChan, GYRO_READ);
+	return recvFromGba(gbaChan);
+}

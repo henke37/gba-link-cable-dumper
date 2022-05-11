@@ -16,5 +16,6 @@ void sendDumper();
 //actual protocol commands
 void readRom(u8 *buff,u32 offset, u32 len);
 void setRumble(bool active);
+u16 readGyro();
 
 #endif

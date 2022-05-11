@@ -83,7 +83,7 @@ void sioHandler() {
 	
 	do {
  
-	iprintf("IRQ: %#0x %#0x!\n",REG_HS_CTRL, REG_JSTAT);
+	//iprintf("IRQ: %#0x %#0x!\n",REG_HS_CTRL, REG_JSTAT);
 	if(isJoyBusRecvPending()) {
 		u32 type=recvJoyBus();
 		handlePacket(type);
