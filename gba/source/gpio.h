@@ -1,0 +1,16 @@
+#ifndef GPIO_H
+#define GPIO_H
+
+#include <stdbool.h>
+#include <gba.h>
+
+void rtcRead();
+void rtcWrite();
+
+void solarRead();
+void setRumble(bool active);
+
+void readTilt();
+u16 readGyro();
+
+#endif

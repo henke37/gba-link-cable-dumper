@@ -11,6 +11,7 @@
 #include <stdnoreturn.h>
 #include "libSave.h"
 #include "joybus.h"
+#include "gpio.h"
 
 #include "../../source/packets.h"
 
@@ -203,6 +204,14 @@ void handlePacket(u32 type) {
 			iprintf("Purloining bios\n");
 			sendBiosDump();
 		} break;
+		
+		case RUMBLE:{
+			setRumble(recvJoyBus()!=0);
+		} break;
+		
+		case GYRO_READ:{
+			sendJoyBus(readGyro());
+		}break;
 		
 		default:
 			iprintf("Got unknown packet %#010lx!\n",type);
