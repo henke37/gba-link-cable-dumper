@@ -23,6 +23,7 @@ void clearScreen();
 void specialHWMenu();
 void ereaderMenu();
 void rtcAndUvMenu();
+void gyroAndRumbleMenu();
 
 void printBanner() {
 	printf("\x1b[2J");
@@ -47,18 +48,6 @@ void handleGbaCart() {
 	
 	readRom(((void*)&romHeader),0x00A0,sizeof(romHeader));
 	
-	clearScreen();
-		
-	//print out all the info from the  game
-	printf("Game Name: %.12s\n",romHeader.gameName);
-	printf("Game ID: %.4s\n",romHeader.gameId);
-	printf("Company ID: %.2s\n",romHeader.makerId);
-	printf("ROM Size: %02.02f MB\n",((float)(gbasize/1024))/1024.f);
-	if(savesize > 0)
-		printf("Save Size: %02.02f KB\n \n",((float)(savesize))/1024.f);
-	else
-		printf("No Save File\n \n");
-		
 	//generate file paths
 	sprintf(romFile,"/dumps/%.12s [%.4s%.2s].gba",
 		romHeader.gameName, romHeader.gameId, romHeader.makerId);
@@ -68,54 +57,73 @@ void handleGbaCart() {
 		romHeader.gameName, romHeader.gameId, romHeader.makerId);
 	fixFName(saveFile+7); //fix name behind "/dumps/"
 	
-	bool romExists = false;//fileExists(romFile);
-	bool saveExists = fileExists(saveFile);
+	while(1) {
+		clearScreen();
+			
+		//print out all the info from the  game
+		printf("Game Name: %.12s\n",romHeader.gameName);
+		printf("Game ID: %.4s\n",romHeader.gameId);
+		printf("Company ID: %.2s\n",romHeader.makerId);
+		printf("ROM Size: %02.02f MB\n",((float)(gbasize/1024))/1024.f);
+		if(savesize > 0)
+			printf("Save Size: %02.02f KB\n \n",((float)(savesize))/1024.f);
+		else
+			printf("No Save File\n \n");
+			
+		
+		bool romExists = false;//fileExists(romFile);
+		bool saveExists = fileExists(saveFile);
 	
-	//let the user choose the option
-	if(!romExists){
-		printf("Press A to dump this game, it will take about %i minutes.\n",gbasize/1024/1024*3/2);
-	} else {
-		printf("Rom dumped.\n");
-	}
-	printf("Press B if you want to cancel dumping this game.\n");
-	if(savesize > 0)
-	{
-		if(!saveExists) {
-			printf("Press Y to backup this save file.\n");
+		//let the user choose the option
+		if(!romExists){
+			printf("Press A to dump this game, it will take about %i minutes.\n",gbasize/1024/1024*3/2);
 		} else {
-			printf("Press X to restore this save file.\n");
+			printf("Rom dumped.\n");
 		}
-		printf("Press L+R to clear the save file on the GBA Cartridge.\n");
-	}
-	if(hasSpecialHardware()) {
-		printf("Press Z for additional options.\n");
-	}
-	printf("\n");
+		printf("Press B if you want to cancel dumping this game.\n");
+		if(savesize > 0)
+		{
+			if(!saveExists) {
+				printf("Press Y to backup this save file.\n");
+			} else {
+				printf("Press X to restore this save file.\n");
+			}
+			printf("Press L+R to clear the save file on the GBA Cartridge.\n");
+		}
+		if(hasSpecialHardware()) {
+			printf("Press Z for additional options.\n");
+		}
+		printf("\n");
+		
+		while(1) {
+			PAD_ScanPads();
+			//sendToGba( gbaChan, READ_PAD);
+			//u32 gbaBtns = recvFromGba(gbaChan);
+			
+			VIDEO_WaitVSync();
+			u32 btns = PAD_ButtonsDown(0);
+			if(btns&PAD_BUTTON_START)
+				endproc();
+			
+			if(btns&PAD_BUTTON_A) {
+				dumpRom();
+			} else if(btns & PAD_BUTTON_B) {
+				return;
+			} else if(btns & PAD_BUTTON_Y) {
+				backupSave();
+				break;
+			} else if(btns & PAD_BUTTON_X) {
+				restoreSave();
+				break;
+			} else if((PAD_ButtonsHeld(0) & (PAD_TRIGGER_L | PAD_TRIGGER_R))==(PAD_TRIGGER_L | PAD_TRIGGER_R)) {
+				clearSave();
+				break;
+			} else if(btns & PAD_TRIGGER_Z) {
+				specialHWMenu();
+				break;
+			}
+		}
 	
-	while(1)
-	{
-		PAD_ScanPads();
-		//sendToGba( gbaChan, READ_PAD);
-		//u32 gbaBtns = recvFromGba(gbaChan);
-		
-		VIDEO_WaitVSync();
-		u32 btns = PAD_ButtonsDown(0);
-		if(btns&PAD_BUTTON_START)
-			endproc();
-		
-		if(btns&PAD_BUTTON_A) {
-			dumpRom();
-		} else if(btns & PAD_BUTTON_B) {
-			return;
-		} else if(btns & PAD_BUTTON_Y) {
-			backupSave();
-		} else if(btns & PAD_BUTTON_X) {
-			restoreSave();
-		} else if((btns & (PAD_TRIGGER_L | PAD_TRIGGER_R))==(PAD_TRIGGER_L | PAD_TRIGGER_R)) {
-			clearSave();
-		} else if(btns & PAD_TRIGGER_Z) {
-			specialHWMenu();
-		}
 	}
 }
 
@@ -153,8 +161,10 @@ void preDumpMenu() {
 				endproc();
 			} else if(btns&PAD_BUTTON_A) {
 				handleGbaCart();
+				break;
 			} else if(btns&PAD_BUTTON_Y) {
 				dumpGbaBios();
+				break;
 			}
 		}
 	}
@@ -168,8 +178,10 @@ void specialHWMenu() {
 		case 'U'://RTC & UV
 			rtcAndUvMenu();
 			break;
-		case 'K'://accl
 		case 'R'://gyro & rumble
+			gyroAndRumbleMenu();
+			break;
+		case 'K'://accl
 		case 'V'://Rumble
 		default:
 			printf("Not implemented.\n");
@@ -228,4 +240,28 @@ void fixFName(char *str) {
 
 void clearScreen() {
 	printf("\x1b[1J\x1b[1;0H");
+}
+
+void gyroAndRumbleMenu() {
+		clearScreen();
+		printf("Hold A to shake shake.\n");
+		printf("Press B to return to dumping.\n");
+		
+		while(1) {
+			PAD_ScanPads();
+			VIDEO_WaitVSync();
+			
+			u32 btns = PAD_ButtonsDown(0);
+			if(btns&PAD_BUTTON_START) {
+				endproc();
+			} else if(btns&PAD_BUTTON_B) {
+				break;
+			}
+			
+			if(btns&PAD_BUTTON_A) {
+				setRumble(true);
+			} else if(PAD_ButtonsUp(0)&PAD_BUTTON_A) {
+				setRumble(false);
+			}
+		}
 }

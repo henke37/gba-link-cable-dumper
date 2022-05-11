@@ -201,3 +201,8 @@ void sendDumper() {
 	
 	gbaUploadMultiboot(gbaChan, gba_mb_gba, gba_mb_gba_size);
 }
+
+void setRumble(bool active) {
+	sendToGba(gbaChan, RUMBLE);
+	sendToGba(gbaChan, active);
+}
