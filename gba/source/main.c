@@ -164,7 +164,7 @@ void handlePacket(u32 type) {
 			sendJoyBus(length);
 			//restore interrupts
 			REG_IME = prevIrqMask;
-			iprintf("ROMREAD OK ");
+			iprintf("OK\n");
 		} break;
 		
 		case READ_SAVE: {
