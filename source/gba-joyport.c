@@ -20,6 +20,8 @@
 u8 *resbuf,*cmdbuf;
 vu8 gbaStatus[4];
 
+u32 recvFromGbaRawNoWait(s32 chan);
+
 void waitGbaReadSentData(s32 chan);
 void waitGbaSetDataToRecv(s32 chan);
 
@@ -70,9 +72,11 @@ void getGbaStatus(s32 chan)
 	gbaStatus[chan]=resbuf[2];
 }
 u32 recvFromGbaRaw(s32 chan) {
-
 	waitGbaSetDataToRecv(chan);
-		
+	return recvFromGbaRawNoWait(chan);
+}
+
+u32 recvFromGbaRawNoWait(s32 chan) {
 	u32 recvData;
 	memset(resbuf,0,32);
 	cmdbuf[0]=0x14; //read
@@ -122,8 +126,20 @@ void sendToGbaRaw(s32 chan, const u8 *buff) {
 u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
+	
+	waitGbaSetDataToRecv(chan);
+	
 	for(j = 0; j < len; j+=4) {
-		*(vu32*)(buff+j) = recvFromGbaRaw(chan);
+		u32 val;
+		int wc=0;
+		do {
+			val=recvFromGbaRawNoWait(chan);
+			printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
+			wc++;
+		} while((gbaStatus[chan] & JOYSTAT_SEND)==0);
+		printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
+		
+		*(vu32*)(buff+j) = val;
 		bytes_read+=4;
 	}
 	
@@ -149,7 +165,6 @@ void waitGbaReadSentData(s32 chan) {
 void waitGbaSetDataToRecv(s32 chan) {
 	int wc=0;
 	do {
-		printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
 		getGbaStatus(chan);
 		wc++;
 	} while((gbaStatus[chan] & JOYSTAT_SEND)==0);
