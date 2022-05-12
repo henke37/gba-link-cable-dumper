@@ -79,7 +79,7 @@ int main(void) {
 
 void sioHandler() {
 	
-	enableJoyBusIRQ(false);
+	irqDisable(IRQ_SERIAL);
 	
 	do {
  
@@ -99,7 +99,7 @@ void sioHandler() {
 	
 	} while(isJoyBusAnyPending());
 	
-	enableJoyBusIRQ(true);
+	irqEnable(IRQ_SERIAL);
 }
 
 void handlePacket(u32 type) {
