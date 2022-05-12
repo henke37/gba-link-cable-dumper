@@ -155,7 +155,7 @@ void handlePacket(u32 type) {
 			u32 offset = recvJoyBus();
 			u32 length = recvJoyBus();
 			const u8* addr=ROM_DATA+offset;
-			iprintf("ROMREAD: %p %lu ",addr,length);
+			iprintf("ROMREAD: %p %lx ",addr,length);
 			sendJoyBusBuff(addr, length);
 			sendJoyBus(length);
 			iprintf("OK\n");
