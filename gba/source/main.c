@@ -156,14 +156,8 @@ void handlePacket(u32 type) {
 			u32 length = recvJoyBus();
 			const u8* addr=ROM_DATA+offset;
 			iprintf("ROMREAD: %p %lu ",addr,length);
-			//disable interrupts
-			u32 prevIrqMask = REG_IME;
-			REG_IME = 0;
 			sendJoyBusBuff(addr, length);
-			
 			sendJoyBus(length);
-			//restore interrupts
-			REG_IME = prevIrqMask;
 			iprintf("OK\n");
 		} break;
 		
