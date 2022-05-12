@@ -132,11 +132,12 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	for(j = 0; j < len; j+=4) {
 		u32 val;
 		int wc=0;
-		do {
+		while(1) {
 			val=recvFromGbaRawNoWait(chan);
-			printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
+			if((gbaStatus[chan] & JOYSTAT_SEND)==JOYSTAT_SEND) break;
 			wc++;
-		} while((gbaStatus[chan] & JOYSTAT_SEND)==0);
+			printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
+		}
 		printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
 		
 		*(vu32*)(buff+j) = val;
