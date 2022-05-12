@@ -127,16 +127,26 @@ void handleGbaCart() {
 	}
 }
 
+bool detectGba() {
+	for(gbaChan=0;gbaChan<3;++gbaChan) {
+		if(isGbaConnected(gbaChan)) return true;
+	}
+	gbaChan=-1;
+	return false;
+}
+
 void waitGbaConnect() {
-	printf("Waiting for a GBA in port %d...\n", gbaChan+1);
+	printf("Waiting for a GBA...\n");
 
 	while(1) {
-		if(isGbaConnected(gbaChan)) break;
+		if(detectGba()) break;
 		PAD_ScanPads();
 		VIDEO_WaitVSync();
 		if(PAD_ButtonsHeld(0))
 			endproc();
 	}
+	
+	printf("Found one in port %d.\n", gbaChan+1);
 	
 	sendDumper();
 	

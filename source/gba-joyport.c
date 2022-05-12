@@ -43,15 +43,8 @@ void initGbaJoyport() {
 }
 
 int isGbaConnected(s32 chan) {
-	SI_GetTypeAsync(chan,acb);
-	if(resval) {
-		if(resval == 0x80 || resval & 8) {
-			return 0;
-		}
-		else if(resval)
-			return 1;
-	}
-	return 0;
+	u32 type=SI_Probe(chan);
+	return type==(SI_GBA);
 }
 void resetGba(s32 chan)
 {
