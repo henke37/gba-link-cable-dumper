@@ -12,6 +12,7 @@
 #include "libSave.h"
 #include "joybus.h"
 #include "gpio.h"
+#include "tilt.h"
 
 #include "../../source/packets.h"
 
@@ -38,6 +39,8 @@ u8 purloinBiosData(int offset);
 void sioHandler();
 
 void noreturn rebootSystem();
+
+void initHW();
 
 //---------------------------------------------------------------------------------
 // Program entry point
@@ -149,6 +152,8 @@ void handlePacket(u32 type) {
 			u32 savesize = SaveSize(save_data,gamesize);
 			sendJoyBus(gamesize);
 			sendJoyBus(savesize);
+			
+			initHW();
 		} break;
 			
 		case READ_ROM:	{
@@ -201,6 +206,13 @@ void handlePacket(u32 type) {
 		
 		case RUMBLE:{
 			setRumble(recvJoyBus()!=0);
+		} break;
+		
+		case TILT_READ: {
+			struct tiltData tilt=readTilt();
+			sendJoyBus(tilt.x);
+			sendJoyBus(tilt.y);
+			startTiltScan();
 		} break;
 		
 		case GYRO_READ:{
@@ -321,4 +333,21 @@ u8 purloinBiosData(int offset) {
 void noreturn rebootSystem() {
 	SystemCall(0x26); 
 	__builtin_unreachable();
+}
+
+void initHW() {
+	switch(ROM_DATA[0x00AC]) {
+		case 'K': {
+			REG_WAITCNT = 0x0B17;
+			startTiltScan();
+		} break;
+		
+		case 'R': {
+			REG_WAITCNT = 0x045B7;
+		} break;
+		
+		default: {
+			REG_WAITCNT = 0x0317;
+		} break;
+	}
 }

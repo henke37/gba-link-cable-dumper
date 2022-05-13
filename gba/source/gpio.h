@@ -10,7 +10,6 @@ void rtcWrite();
 void solarRead();
 void setRumble(bool active);
 
-void readTilt();
 u16 readGyro();
 
 #endif

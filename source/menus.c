@@ -24,6 +24,7 @@ void specialHWMenu();
 void ereaderMenu();
 void rtcAndUvMenu();
 void gyroAndRumbleMenu();
+void tiltMenu();
 
 void printBanner() {
 	printf("\x1b[2J");
@@ -191,7 +192,8 @@ void specialHWMenu() {
 		case 'R'://gyro & rumble
 			gyroAndRumbleMenu();
 			break;
-		case 'K'://accl
+		case 'K'://tilt
+			tiltMenu();
 		case 'V'://Rumble
 		default:
 			printf("Not implemented.\n");
@@ -201,6 +203,26 @@ void specialHWMenu() {
 void ereaderMenu() {
 }
 void rtcAndUvMenu() {
+}
+
+void tiltMenu() {
+	clearScreen();
+	printf("Press B to return to dumping.\n");
+	
+	while(1) {
+		PAD_ScanPads();
+		VIDEO_WaitVSync();
+		
+		struct tiltData tilt=readTilt();
+		printf("\rTilt: %.4hx %.4hx", tilt.x, tilt.y);
+		
+		u32 btns = PAD_ButtonsDown(0);
+		if(btns&PAD_BUTTON_START) {
+			endproc();
+		} else if(btns&PAD_BUTTON_B) {
+			break;
+		}
+	}
 }
 
 void warnError(char *msg) {
@@ -253,28 +275,28 @@ void clearScreen() {
 }
 
 void gyroAndRumbleMenu() {
-		clearScreen();
-		printf("Hold A to shake shake.\n");
-		printf("Press B to return to dumping.\n");
+	clearScreen();
+	printf("Hold A to shake shake.\n");
+	printf("Press B to return to dumping.\n");
+	
+	while(1) {
+		PAD_ScanPads();
+		VIDEO_WaitVSync();
 		
-		while(1) {
-			PAD_ScanPads();
-			VIDEO_WaitVSync();
-			
-			u16 gyro=readGyro();
-			printf("\rGyro: %.4hx", gyro);
-			
-			u32 btns = PAD_ButtonsDown(0);
-			if(btns&PAD_BUTTON_START) {
-				endproc();
-			} else if(btns&PAD_BUTTON_B) {
-				break;
-			}
-			
-			if(btns&PAD_BUTTON_A) {
-				setRumble(true);
-			} else if(PAD_ButtonsUp(0)&PAD_BUTTON_A) {
-				setRumble(false);
-			}
+		u16 gyro=readGyro();
+		printf("\rGyro: %.4hx", gyro);
+		
+		u32 btns = PAD_ButtonsDown(0);
+		if(btns&PAD_BUTTON_START) {
+			endproc();
+		} else if(btns&PAD_BUTTON_B) {
+			break;
 		}
+		
+		if(btns&PAD_BUTTON_A) {
+			setRumble(true);
+		} else if(PAD_ButtonsUp(0)&PAD_BUTTON_A) {
+			setRumble(false);
+		}
+	}
 }

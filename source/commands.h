@@ -18,4 +18,10 @@ void readRom(u8 *buff,u32 offset, u32 len);
 void setRumble(bool active);
 u16 readGyro();
 
+struct tiltData {
+	u16 x;
+	u16 y;
+};
+struct tiltData readTilt();
+
 #endif

@@ -211,3 +211,11 @@ u16 readGyro() {
 	sendToGba(gbaChan, GYRO_READ);
 	return recvFromGba(gbaChan);
 }
+
+struct tiltData readTilt() {
+	struct tiltData tilt;
+	sendToGba(gbaChan, TILT_READ);
+	tilt.x=recvFromGba(gbaChan);
+	tilt.y=recvFromGba(gbaChan);
+	return tilt;
+}

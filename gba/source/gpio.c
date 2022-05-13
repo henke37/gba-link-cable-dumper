@@ -5,6 +5,7 @@
 #define GPIO_DATA *((vu16*)0x80000C4)
 #define GPIO_DIR  *((vu16*)0x80000C6)
 #define GPIO_CTRL *((vu16*)0x80000C8)
+#define ROM_WS0_READ ((vu32*)0x8000000)
 
 #define RUMBLE_FLAG 0x08
 
@@ -33,6 +34,10 @@ u16 readGyro() {
 	for(int i=0;i<16;++i) {
 		//CLK to low
 		GPIO_DATA = rumbleBit;
+		
+		ROM_WS0_READ[0x100];
+		ROM_WS0_READ[0x101];
+		ROM_WS0_READ[0x102];
 		
 		//read bit
 		bool bit=GPIO_DATA & 0x04;		
