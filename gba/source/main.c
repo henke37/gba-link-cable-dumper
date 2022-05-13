@@ -346,6 +346,10 @@ void initHW() {
 			REG_WAITCNT = 0x045B7;
 		} break;
 		
+		case 'P': {
+			REG_WAITCNT = 0x05803;
+		}
+		
 		default: {
 			REG_WAITCNT = 0x0317;
 		} break;
