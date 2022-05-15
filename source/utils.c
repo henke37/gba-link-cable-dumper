@@ -3,6 +3,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "globals.h"
 
@@ -38,4 +40,24 @@ bool hasSpecialHardware() {
 		default:
 			return true;
 	}
+}
+
+void warnError(const char *msg) {
+	puts(msg);
+	VIDEO_WaitVSync();
+	VIDEO_WaitVSync();
+	sleep(2);
+}
+void fatalError(const char *msg) {
+	puts(msg);
+	VIDEO_WaitVSync();
+	VIDEO_WaitVSync();
+	sleep(5);
+	exit(0);
+}
+void endproc() {
+	printf("Start pressed, exit\n");
+	VIDEO_WaitVSync();
+	VIDEO_WaitVSync();
+	exit(0);
 }

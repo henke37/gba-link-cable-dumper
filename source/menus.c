@@ -225,26 +225,6 @@ void tiltMenu() {
 	}
 }
 
-void warnError(const char *msg) {
-	puts(msg);
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
-	sleep(2);
-}
-void fatalError(const char *msg) {
-	puts(msg);
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
-	sleep(5);
-	exit(0);
-}
-void endproc() {
-	printf("Start pressed, exit\n");
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
-	exit(0);
-}
-
 void fixFName(char *str) {
 	u8 i = 0;
 	for(i = 0; i < strlen(str); ++i)
