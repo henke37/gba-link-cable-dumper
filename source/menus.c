@@ -225,13 +225,13 @@ void tiltMenu() {
 	}
 }
 
-void warnError(char *msg) {
+void warnError(const char *msg) {
 	puts(msg);
 	VIDEO_WaitVSync();
 	VIDEO_WaitVSync();
 	sleep(2);
 }
-void fatalError(char *msg) {
+void fatalError(const char *msg) {
 	puts(msg);
 	VIDEO_WaitVSync();
 	VIDEO_WaitVSync();
