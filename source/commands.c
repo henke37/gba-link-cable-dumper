@@ -179,7 +179,7 @@ void testComs() {
 		printf("%02d",testdump[i]);
 	}
 	for(int i=0;i<40;++i) {
-		if(testdump[i]!=i) fatalError("Failed!");
+		if(testdump[i]!=(i&0x01)) fatalError("Failed!");
 	}
 	printf("Pass.\n");
 	
@@ -190,6 +190,18 @@ void testComs() {
 	}
 	printf("Send buff.\n");
 	sendBuffToGba(gbaChan, testdump, 40);
+	
+	printf("Send TST_READZEROS packet. ");
+	sendToGba(gbaChan, TST_READZEROS);
+	printf("Recv buff ");
+	recvBuffFromGba(gbaChan, testdump, 40);
+	for(int i=0;i<40;++i) {
+		printf("%02d",testdump[i]);
+	}
+	for(int i=0;i<40;++i) {
+		if(testdump[i]!=0) fatalError("Failed!");
+	}
+	printf("Pass.\n");
 }
 
 void sendDumper() {

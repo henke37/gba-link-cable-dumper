@@ -8,7 +8,9 @@
 #include <gccore.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "gba-joyport.h"
+#include "utils.h"
 
 //from my tests 50us seems to be the lowest
 //safe si transfer delay in between calls
@@ -122,7 +124,9 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	
 	waitGbaSetDataToRecv(chan);
 	
-	for(j = 0; j < len; j+=4) {
+	u32 prevVal=0;
+	
+	for(j = 0; j < len; ) {
 		u32 val;
 		int wc=0;
 		while(1) {
@@ -133,8 +137,22 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 		}
 		printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
 		
-		*(vu32*)(buff+j) = val;
-		bytes_read+=4;
+		if(gbaStatus[chan] & 0x0010) {
+			val=__builtin_bswap32(val);
+			for(int k=0;k<val;++k) {
+				if(j>=len && k>=val) {
+					fatalError("Decompression overrun!");
+				}
+				
+				*(vu32*)(buff+j) = prevVal;
+				j+=4;
+			}
+		} else {
+			*(vu32*)(buff+j) = val;
+			bytes_read+=4;
+			prevVal=val;
+			j+=4;
+		}
 	}
 	
 	return bytes_read;

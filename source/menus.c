@@ -58,6 +58,10 @@ void handleGbaCart() {
 		romHeader.gameName, romHeader.gameId, romHeader.makerId);
 	fixFName(saveFile+7); //fix name behind "/dumps/"
 	
+	/*for(int i=0;i<sizeof(romHeader);++i) {
+		printf("%.2X",((u8*)&romHeader)[i]);
+	}*/
+	
 	while(1) {
 		clearScreen();
 			

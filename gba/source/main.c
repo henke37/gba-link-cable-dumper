@@ -124,7 +124,15 @@ void handlePacket(u32 type) {
 		case TST_READBUF: {
 			iprintf("TST_RB");
 			for(int i=0;i<40;++i) {
-				save_data[i]=i;
+				save_data[i]=i&0x01;
+			}
+			sendJoyBusBuff(save_data, 40);
+		} break;
+		
+		case TST_READZEROS: {
+			iprintf("TST_RZ");
+			for(int i=0;i<40;++i) {
+				save_data[i]=0;
 			}
 			sendJoyBusBuff(save_data, 40);
 		} break;
