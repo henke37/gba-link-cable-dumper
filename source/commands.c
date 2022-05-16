@@ -174,31 +174,31 @@ void testComs() {
 	printf("Send TST_READBUF packet. ");
 	sendToGba(gbaChan, TST_READBUF);
 	printf("Recv buff ");
-	recvBuffFromGba(gbaChan, testdump, 40);
-	for(int i=0;i<40;++i) {
+	recvBuffFromGba(gbaChan, testdump, TESTBUF_LEN);
+	for(int i=0;i<TESTBUF_LEN;++i) {
 		printf("%02d",testdump[i]);
 	}
-	for(int i=0;i<40;++i) {
-		if(testdump[i]!=(i&0x01)) fatalError("Failed!");
+	for(int i=0;i<TESTBUF_LEN;++i) {
+		if(testdump[i]!=(i/10)) fatalError("Failed!");
 	}
 	printf("Pass.\n");
 	
 	printf("Send TST_SENDBUF packet. ");
 	sendToGba(gbaChan, TST_SENDBUF);
-	for(int i=0;i<40;++i) {
+	for(int i=0;i<TESTBUF_LEN;++i) {
 		testdump[i]=i;
 	}
 	printf("Send buff.\n");
-	sendBuffToGba(gbaChan, testdump, 40);
+	sendBuffToGba(gbaChan, testdump, TESTBUF_LEN);
 	
 	printf("Send TST_READZEROS packet. ");
 	sendToGba(gbaChan, TST_READZEROS);
 	printf("Recv buff ");
-	recvBuffFromGba(gbaChan, testdump, 40);
-	for(int i=0;i<40;++i) {
+	recvBuffFromGba(gbaChan, testdump, TESTBUF_LEN);
+	for(int i=0;i<TESTBUF_LEN;++i) {
 		printf("%02d",testdump[i]);
 	}
-	for(int i=0;i<40;++i) {
+	for(int i=0;i<TESTBUF_LEN;++i) {
 		if(testdump[i]!=0) fatalError("Failed!");
 	}
 	printf("Pass.\n");

@@ -93,6 +93,10 @@ void sioHandler() {
 	}
 	if(isJoyBusSendPending()) {
 		iprintf("Spurious send?\n");
+		REG_IME=0;
+		while (1) {
+			Halt();
+		}
 	}
 	if(isJoyBusResetPending()) {
 		iprintf("Reset.\n");
@@ -123,25 +127,25 @@ void handlePacket(u32 type) {
 		
 		case TST_READBUF: {
 			iprintf("TST_RB");
-			for(int i=0;i<40;++i) {
-				save_data[i]=i&0x01;
+			for(int i=0;i<TESTBUF_LEN;++i) {
+				save_data[i]=i/10;
 			}
-			sendJoyBusBuff(save_data, 40);
+			sendJoyBusBuff(save_data, TESTBUF_LEN);
 		} break;
 		
 		case TST_READZEROS: {
 			iprintf("TST_RZ");
-			for(int i=0;i<40;++i) {
+			for(int i=0;i<TESTBUF_LEN;++i) {
 				save_data[i]=0;
 			}
-			sendJoyBusBuff(save_data, 40);
+			sendJoyBusBuff(save_data, TESTBUF_LEN);
 		} break;
 		
 		case TST_SENDBUF: {
 			iprintf("TST_SB ");
-			memset(save_data,0,40);
-			recvJoyBusBuff(save_data, 40);
-			for(int i=0;i<40;++i) {
+			memset(save_data,0,TESTBUF_LEN);
+			recvJoyBusBuff(save_data, TESTBUF_LEN);
+			for(int i=0;i<TESTBUF_LEN;++i) {
 				if(save_data[i]!=i) {
 					iprintf("FAIL!");
 					break;

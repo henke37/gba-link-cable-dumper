@@ -27,4 +27,6 @@ typedef enum {
 	SLIDER_DS=101
 } packetType;
 
+#define TESTBUF_LEN 0x40
+
 #endif
