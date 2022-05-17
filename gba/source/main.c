@@ -355,12 +355,17 @@ void initHW() {
 		} break;
 		
 		case 'R': {
+			initGPIO();
 			REG_WAITCNT = 0x045B7;
 		} break;
 		
 		case 'P': {
 			REG_WAITCNT = 0x05803;
-		}
+		} break;
+		
+		case 'U': {
+			initGPIO();
+		} break;
 		
 		default: {
 			REG_WAITCNT = 0x0317;

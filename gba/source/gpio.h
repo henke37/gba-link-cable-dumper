@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <gba.h>
 
+void initGPIO();
+
 void rtcRead();
 void rtcWrite();
 

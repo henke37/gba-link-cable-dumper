@@ -9,6 +9,10 @@
 
 #define RUMBLE_FLAG 0x08
 
+void initGPIO() {
+	GPIO_CTRL = 1;
+}
+
 void rtcRead();
 void rtcWrite();
 
