@@ -231,6 +231,12 @@ void handlePacket(u32 type) {
 			sendJoyBus(readGyro());
 		}break;
 		
+		case RTC_READ: {
+			struct rtcTime time=rtcReadTime();
+			sendJoyBus(time.year | time.month << 8 | time.day << 16);
+			sendJoyBus((time.hour +(time.pm?12:0)) | time.min << 8 | time.sec << 16);
+		} break;
+		
 		default:
 			iprintf("Got unknown packet %#010lx!\n",type);
 		break;
