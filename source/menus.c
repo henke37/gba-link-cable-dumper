@@ -207,6 +207,33 @@ void specialHWMenu() {
 void ereaderMenu() {
 }
 void rtcAndUvMenu() {
+	struct rtcData time=readRtc();
+	
+	/*if(time.status & 0x0070) {
+		printf("RTC: Bad power!\n");
+	} else*/ {
+		printf(
+			"RTC: %d/%d/%d %d:%d:%d\n",
+			time.year+2000,
+			time.month,
+			time.day,
+			time.hour,
+			time.min,
+			time.sec
+		);
+	}
+	
+	while(1) {
+		PAD_ScanPads();
+		VIDEO_WaitVSync();
+		
+		u32 btns = PAD_ButtonsDown(0);
+		if(btns&PAD_BUTTON_START) {
+			endproc();
+		} else if(btns&PAD_BUTTON_B) {
+			break;
+		}
+	}
 }
 
 void tiltMenu() {

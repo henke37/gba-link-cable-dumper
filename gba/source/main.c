@@ -232,8 +232,9 @@ void handlePacket(u32 type) {
 		}break;
 		
 		case RTC_READ: {
+			u8 status = rtcReadStatus();
 			struct rtcTime time=rtcReadTime();
-			sendJoyBus(time.year | time.month << 8 | time.day << 16);
+			sendJoyBus(time.year | time.month << 8 | time.day << 16 | status << 24);
 			sendJoyBus((time.hour +(time.pm?12:0)) | time.min << 8 | time.sec << 16);
 		} break;
 		

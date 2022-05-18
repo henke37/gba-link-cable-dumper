@@ -24,4 +24,16 @@ struct tiltData {
 };
 struct tiltData readTilt();
 
+struct rtcData {
+	u8 status;
+	u8 year;
+	u8 month;
+	u8 day;
+	u8 hour;
+	u8 min;
+	u8 sec;
+};
+
+struct rtcData readRtc();
+
 #endif

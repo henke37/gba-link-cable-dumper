@@ -231,3 +231,22 @@ struct tiltData readTilt() {
 	tilt.y=recvFromGba(gbaChan);
 	return tilt;
 }
+
+struct rtcData readRtc() {
+	struct rtcData time;
+	
+	sendToGba(gbaChan, RTC_READ);
+	
+	u32 data=recvFromGbaRaw(gbaChan);
+	time.status=(data >> 24) & 0x00FF;
+	time.day=(data >> 16) & 0x00FF;
+	time.month=(data >> 8) & 0x00FF;
+	time.year=data & 0x00FF;
+	
+	data=recvFromGbaRaw(gbaChan);
+	time.sec=(data >> 16) & 0x00FF;
+	time.min=(data >> 8) & 0x00FF;
+	time.hour=data & 0x00FF;
+	
+	return time;
+}
