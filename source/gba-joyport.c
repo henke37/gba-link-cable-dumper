@@ -144,6 +144,7 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 					fatalError("Decompression overrun!");
 				}
 				
+				bytes_read+=4;
 				*(vu32*)(buff+j) = prevVal;
 				j+=4;
 			}
