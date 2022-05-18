@@ -140,7 +140,7 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 		if(gbaStatus[chan] & 0x0010) {
 			val=__builtin_bswap32(val);
 			for(int k=0;k<val;++k) {
-				if(j>=len && k>=val) {
+				if(j>=len) {
 					fatalError("Decompression overrun!");
 				}
 				
