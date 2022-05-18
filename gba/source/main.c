@@ -354,6 +354,32 @@ void noreturn rebootSystem() {
 	__builtin_unreachable();
 }
 
+#define rtcTitleCount 9
+
+const char* rtcTitles[rtcTitleCount]= {
+	"AXPJ",
+	"AXVJ",
+	"BPEJ",
+	"AXPE",
+	"AXVE",
+	"BPEE",
+	"AXPP",
+	"AXVP",
+	"BPEP"
+};
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
+bool isRtcGame() {
+	const char *gameCode=(const char*)&ROM_DATA[0x00AC];
+	for(int i=0;i<rtcTitleCount;++i) {
+		if(strncmp(gameCode, rtcTitles[i], 4)==0) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void initHW() {
 	switch(ROM_DATA[0x00AC]) {
 		case 'K': {
@@ -371,11 +397,16 @@ void initHW() {
 		} break;
 		
 		case 'U': {
-			initGPIO();
+			initRTC();
 		} break;
 		
 		default: {
 			REG_WAITCNT = 0x0317;
+			bool isRtc=isRtcGame();
+			if(isRtc) {
+				initRTC();
+			}
 		} break;
 	}
 }
+#pragma GCC diagnostic pop

@@ -21,6 +21,10 @@ void initGPIO() {
 	GPIO_CTRL = 1;
 }
 
+void initRTC() {
+	initGPIO();
+}
+
 u8 toBCD(u8 x) {
 	return (x%10) | ((x/10)<<4);
 }

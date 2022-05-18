@@ -6,6 +6,8 @@
 
 void initGPIO();
 
+void initRTC();
+
 void solarRead();
 void setRumble(bool active);
 
