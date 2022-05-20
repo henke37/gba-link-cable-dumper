@@ -7,6 +7,9 @@
  
 #include <gba.h>
 #include <stdio.h>
+#include <assert.h>
+#include <stdint.h>
+
 #include "joybus.h"
 
 #define JOYCNT_RESET 1
@@ -55,6 +58,10 @@ u32 recvJoyBus() {
 void sendJoyBusBuff(const u8 *data, int len) {
 	int i;
 	u32 prevVal=0;
+	
+	assert((((uintptr_t)data)%4)==0);
+	assert((len % 4)==0);
+	
 	for(i = 0; i < len;)  {
 		u32 val=*(vu32*)(data+i);
 		if(val==prevVal) {
@@ -78,6 +85,10 @@ void sendJoyBusBuff(const u8 *data, int len) {
 
 void recvJoyBusBuff(u8 *data, int len) {
 	int i;
+	
+	assert((((uintptr_t)data)%4)==0);
+	assert((len % 4)==0);
+	
 	for(i = 0; i < len; i+=4) {
 		*(vu32*)(data+i) = recvJoyBus();
 	}

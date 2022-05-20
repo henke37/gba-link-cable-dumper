@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
+#include <stdint.h>
+
 #include "gba-joyport.h"
 #include "utils.h"
 
@@ -136,6 +139,9 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
 	
+	assert((((uintptr_t)buff)%4)==0);
+	assert((len % 4)==0);
+	
 	waitGbaSetDataToRecv(chan);
 	
 	u32 prevVal=0;
@@ -170,6 +176,10 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 
 void sendBuffToGba(s32 chan, const u8 *buff, int len) {
 	int i;
+	
+	assert((((uintptr_t)buff)%4)==0);
+	assert((len % 4)==0);
+	
 	for(i = 0; i < len; i+=4)
 		sendToGba(chan,__builtin_bswap32(*(vu32*)(buff+i)));
 }
