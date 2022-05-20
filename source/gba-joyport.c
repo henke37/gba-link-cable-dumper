@@ -118,6 +118,20 @@ void sendToGbaRaw(s32 chan, const u8 *buff) {
 	waitGbaReadSentData(chan);
 }
 
+u32 recvFromGbaRawUntilSet(s32 chan) {
+	u32 val;
+	int wc=0;
+	while(1) {
+		val=recvFromGbaRawNoWait(chan);
+		if((gbaStatus[chan] & JOYSTAT_SEND)==JOYSTAT_SEND) break;
+		wc++;
+		printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
+	}
+	printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
+	
+	return val;
+}
+
 u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
@@ -127,15 +141,7 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	u32 prevVal=0;
 	
 	for(j = 0; j < len; ) {
-		u32 val;
-		int wc=0;
-		while(1) {
-			val=recvFromGbaRawNoWait(chan);
-			if((gbaStatus[chan] & JOYSTAT_SEND)==JOYSTAT_SEND) break;
-			wc++;
-			printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
-		}
-		printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
+		u32 val=recvFromGbaRawUntilSet(chan);
 		
 		if(gbaStatus[chan] & 0x0010) {
 			val=__builtin_bswap32(val);
@@ -149,6 +155,9 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 				j+=4;
 			}
 		} else {
+			if(j>=len) {
+				fatalError("Decompression overrun!");
+			}
 			*(vu32*)(buff+j) = val;
 			bytes_read+=4;
 			prevVal=val;
