@@ -27,6 +27,7 @@ typedef struct {
 	char reserved[7];
 	char version;
 	char complement;
+	char reserved2[2];
 } romHeaderT;
 extern romHeaderT romHeader;
 
