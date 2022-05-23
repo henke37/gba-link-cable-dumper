@@ -22,76 +22,65 @@
 #define JOYSTAT_SEND 8
 #define JOYSTAT_RECV 2
 
-u8 *resbuf,*cmdbuf;
-vu8 gbaStatus[4];
+GbaConnection gbaCon[4];
 
-u32 recvFromGbaRawNoWait(s32 chan);
-
-void waitGbaReadSentData(s32 chan);
-void waitGbaSetDataToRecv(s32 chan);
 
 volatile u32 transval = 0;
-void transcb(s32 chan, u32 ret)
-{
+void transcb(s32 chan, u32 ret) {
 	transval = 1;
 }
 
 volatile u32 resval = 0;
-void acb(s32 res, u32 val)
-{
-	resval = val;
+
+GbaConnection::GbaConnection() {
+	cmdbuf = (u8*) memalign(32,32);
+	resbuf = (u8*) memalign(32,32);
 }
 
-void initGbaJoyport() {
-	cmdbuf = memalign(32,32);
-	resbuf = memalign(32,32);
-}
-
-int isGbaConnected(s32 chan) {
-	u32 type=SI_Probe(chan);
+bool GbaConnection::isGbaConnected() const {
+	u32 type=SI_Probe(getChan());
 	return type==(SI_GBA);
 }
-void resetGba(s32 chan)
-{
+
+void GbaConnection::resetGba() {
 	cmdbuf[0] = 0xFF; //reset
 	transval = 0;
-	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
+	SI_Transfer(getChan(),cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 	
-	gbaStatus[chan]=resbuf[2];
+	gbaStatus=resbuf[2];
 }
-void getGbaStatus(s32 chan)
-{
+void GbaConnection::pollStatus() {
 	cmdbuf[0] = 0; //status
 	transval = 0;
-	SI_Transfer(chan,cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
+	SI_Transfer(getChan(),cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 	
-	gbaStatus[chan]=resbuf[2];
+	gbaStatus=resbuf[2];
 }
-u32 recvFromGbaRaw(s32 chan) {
-	waitGbaSetDataToRecv(chan);
-	return recvFromGbaRawNoWait(chan);
+u32 GbaConnection::recvRaw() {
+	waitGbaSetDataToRecv();
+	return recvRawNoWait();
 }
 
-u32 recvFromGbaRawNoWait(s32 chan) {
+u32 GbaConnection::recvRawNoWait() {
 	u32 recvData;
 	memset(resbuf,0,32);
 	cmdbuf[0]=0x14; //read
 	transval = 0;
-	SI_Transfer(chan,cmdbuf,1,resbuf,5,transcb,SI_TRANS_DELAY);
+	SI_Transfer(getChan(),cmdbuf,1,resbuf,5,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 	
 	recvData=*(vu32*)resbuf;
-	gbaStatus[chan]=resbuf[4];
+	gbaStatus=resbuf[4];
 	
 	return recvData;
 }
-u32 recvFromGba(s32 chan) {
-	return __builtin_bswap32(recvFromGbaRaw(chan));
+u32 GbaConnection::recv() {
+	return __builtin_bswap32(recvRaw());
 }
 
-void sendToGba(s32 chan, u32 msg) {
+void GbaConnection::send(u32 msg) {
 	cmdbuf[0]=0x15;
 	cmdbuf[1]=(msg>>0)&0xFF;
 	cmdbuf[2]=(msg>>8)&0xFF;
@@ -99,14 +88,14 @@ void sendToGba(s32 chan, u32 msg) {
 	cmdbuf[4]=(msg>>24)&0xFF;
 	transval = 0;
 	resbuf[0] = 0;
-	SI_Transfer(chan,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
+	SI_Transfer(getChan(),cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
-	gbaStatus[chan]=resbuf[0];
+	gbaStatus=resbuf[0];
 	
-	waitGbaReadSentData(chan);
+	waitGbaReadSentData();
 }
 
-void sendToGbaRaw(s32 chan, const u8 *buff) {
+void GbaConnection::sendRaw(const u8 *buff) {
 	cmdbuf[0]=0x15;
 	cmdbuf[1]=buff[0];
 	cmdbuf[2]=buff[1];
@@ -114,44 +103,44 @@ void sendToGbaRaw(s32 chan, const u8 *buff) {
 	cmdbuf[4]=buff[3];
 	transval = 0;
 	resbuf[0] = 0;
-	SI_Transfer(chan,cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
+	SI_Transfer(getChan(),cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
-	gbaStatus[chan]=resbuf[0];
+	gbaStatus=resbuf[0];
 	
-	waitGbaReadSentData(chan);
+	waitGbaReadSentData();
 }
 
-u32 recvFromGbaRawUntilSet(s32 chan) {
+u32 GbaConnection::recvRawUntilSet() {
 	u32 val;
 	int wc=0;
 	while(1) {
-		val=recvFromGbaRawNoWait(chan);
-		if((gbaStatus[chan] & JOYSTAT_SEND)==JOYSTAT_SEND) break;
+		val=recvRawNoWait();
+		if((gbaStatus & JOYSTAT_SEND)==JOYSTAT_SEND) break;
 		wc++;
-		printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus[chan]);
+		printf("\x1b[s\x1b[1;60HWR: %x\x1b[u",gbaStatus);
 	}
 	printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
 	
 	return val;
 }
 
-u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
+u32 GbaConnection::recvBuff(u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
 	
 	assert((((uintptr_t)buff)%4)==0);
 	assert((len % 4)==0);
 	
-	waitGbaSetDataToRecv(chan);
+	waitGbaSetDataToRecv();
 	
 	u32 prevVal=0;
 	
 	for(j = 0; j < len; ) {
-		u32 val=recvFromGbaRawUntilSet(chan);
+		u32 val=recvRawUntilSet();
 		
-		if(gbaStatus[chan] & 0x0010) {
+		if(gbaStatus & 0x0010) {
 			val=__builtin_bswap32(val);
-			for(int k=0;k<val;++k) {
+			for(u32 k=0;k<val;++k) {
 				if(j>=len) {
 					fatalError("Decompression overrun!");
 				}
@@ -174,35 +163,31 @@ u32 recvBuffFromGba(s32 chan, u8 *buff, int len) {
 	return bytes_read;
 }
 
-void sendBuffToGba(s32 chan, const u8 *buff, int len) {
+void GbaConnection::sendBuff(const u8 *buff, int len) {
 	int i;
 	
 	assert((((uintptr_t)buff)%4)==0);
 	assert((len % 4)==0);
 	
 	for(i = 0; i < len; i+=4)
-		sendToGba(chan,__builtin_bswap32(*(vu32*)(buff+i)));
+		send(__builtin_bswap32(*(vu32*)(buff+i)));
 }
 
 
-void waitGbaReadSentData(s32 chan) {
+void GbaConnection::waitGbaReadSentData() {
 	int wc=0;
 	do {
-		printf("\x1b[s\x1b[1;60HWS: %x\x1b[u",gbaStatus[chan]);
-		getGbaStatus(chan);
+		printf("\x1b[s\x1b[1;60HWS: %x\x1b[u",gbaStatus);
+		pollStatus();
 		wc++;
-	} while((gbaStatus[chan] & JOYSTAT_RECV)==JOYSTAT_RECV);
+	} while((gbaStatus & JOYSTAT_RECV)==JOYSTAT_RECV);
 	printf("\x1b[s\x1b[1;60HWS: OK\x1b[2;60H%d\x1b[u",wc);
 }
-void waitGbaSetDataToRecv(s32 chan) {
+void GbaConnection::waitGbaSetDataToRecv() {
 	int wc=0;
 	do {
-		getGbaStatus(chan);
+		pollStatus();
 		wc++;
-	} while((gbaStatus[chan] & JOYSTAT_SEND)==0);
+	} while((gbaStatus & JOYSTAT_SEND)==0);
 	printf("\x1b[s\x1b[1;60HWR: OK\x1b[2;60H%d\x1b[u",wc);
-}
-
-u8 getExtaGbaStatus(s32 chan) {
-	return gbaStatus[chan] & 0x30;
 }

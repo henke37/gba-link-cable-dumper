@@ -9,47 +9,43 @@
 #include "gba-upload.h"
 #include "gba-joybus.h"
 
-extern u8 *resbuf;
-
 unsigned int docrc(u32 crc, u32 val);
 unsigned int calckey(unsigned int size);
 
-void waitGbaBios(s32 chan) {
-	resbuf[2]=0;
-	while(!(resbuf[2]&0x10))
-	{
-		resetGba(chan);
-		getGbaStatus(chan);
+void waitGbaBios(GbaConnection &con) {
+	con.gbaStatus=0;
+	while(!(con.gbaStatus&0x10)) {
+		con.resetGba();
+		con.pollStatus();
 	}
 }
 
-void gbaUploadMultiboot(s32 chan, const uint8_t *executable, size_t executableSize) {
+void gbaUploadMultiboot(GbaConnection &con, const uint8_t *executable, size_t executableSize) {
 	unsigned int sendsize = ((executableSize+7)&~7);
 	unsigned int ourkey = calckey(sendsize);
-	int i;
+	unsigned int i;
 	
 	//printf("Our Key: %08x\n", ourkey);
 	//get current sessionkey
-	u32 sessionkeyraw = recvFromGbaRaw(chan);
+	u32 sessionkeyraw = con.recvRaw();
 	u32 sessionkey = __builtin_bswap32(sessionkeyraw^0x7365646F);
 	//send over our own key
-	sendToGba(chan, __builtin_bswap32(ourkey));
+	con.send(__builtin_bswap32(ourkey));
 	
 	unsigned int fcrc = 0x15a0;	
 	
 	//send over gba header
-	sendBuffToGba(chan, executable, 0xC0);
+	con.sendBuff(executable, 0xC0);
 	
 	//printf("Header done! Sending ROM...\n");
-	for(i = 0xC0; i < sendsize; i+=4)
-	{
+	for(i = 0xC0; i < sendsize; i+=4) {
 		u32 enc = ((executable[i+3]<<24)|(executable[i+2]<<16)|(executable[i+1]<<8)|(executable[i]));
 		fcrc=docrc(fcrc,enc);
 		sessionkey = (sessionkey*0x6177614B)+1;
 		enc^=sessionkey;
 		enc^=((~(i+(0x20<<20)))+1);
 		enc^=0x20796220;
-		sendToGba(chan, enc);
+		con.send(enc);
 	}
 	fcrc |= (sendsize<<16);
 	//printf("ROM done! CRC: %08x\n", fcrc);
@@ -59,9 +55,9 @@ void gbaUploadMultiboot(s32 chan, const uint8_t *executable, size_t executableSi
 	fcrc^=sessionkey;
 	fcrc^=((~(i+(0x20<<20)))+1);
 	fcrc^=0x20796220;
-	sendToGba(chan, fcrc);
+	con.send(fcrc);
 	//get crc back (unused)
-	recvFromGbaRaw(chan);
+	con.recvRaw();
 }
 
 unsigned int calckey(unsigned int size)

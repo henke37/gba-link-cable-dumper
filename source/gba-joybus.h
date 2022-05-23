@@ -2,18 +2,44 @@
 #define GBA_JOYBUS_H
 void initGbaJoyport();
 
-void resetGba(s32 chan);
-void getGbaStatus(s32 chan);
-u32 recvFromGba(s32 chan);
-u32 recvFromGbaRaw(s32 chan);
-void sendToGba(s32 chan, u32 msg);
-void sendToGbaRaw(s32 chan, const u8 *buff);
+class GbaConnection;
 
-int isGbaConnected(s32 chan);
+extern GbaConnection gbaCon[4];
 
-u32 recvBuffFromGba(s32 chan, u8 *buff, int len);
-void sendBuffToGba(s32 chan, const u8 *buff, int len);
+class GbaConnection {
+	u8 *resbuf,*cmdbuf;
+	u8 gbaStatus;
+	
+	s32 getChan() const {
+		return this-gbaCon;
+	};
+	
+	void sendRaw(const u8 *buff);
+	
+	u32 recvRawNoWait();
+	u32 recvRawUntilSet();
 
-u8 getExtaGbaStatus(s32 chan);
+	void waitGbaReadSentData();
+	void waitGbaSetDataToRecv();
+	void pollStatus();
+	
+public:
+	GbaConnection();
+	
+	void resetGba();
+	u32 recv();
+	u32 recvRaw();
+	
+	u32 recvBuff(u8 *buff, int len);
+	void sendBuff(const u8 *buff, int len);
+	
+	void send(u32);
+	
+	bool isGbaConnected() const;
+	
+	friend void waitGbaBios(GbaConnection &con);
+};
+
+
 
 #endif

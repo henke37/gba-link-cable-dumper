@@ -29,17 +29,17 @@ void dumpGbaBios() {
 	if(!f)
 		fatalError("ERROR: Could not create file! Exit...");
 	//send over bios dump command
-	sendToGba(gbaChan, READ_BIOS);
+	gbaCon[gbaChan].send(READ_BIOS);
 	//lets go!
 	printf("Dumping...\n");
 	
-	recvBuffFromGba(gbaChan, testdump, 0x4000);
+	gbaCon[gbaChan].recvBuff(testdump, 0x4000);
 		
 	fwrite(testdump,0x4000,1,f);
 	printf("Closing file\n");
 	fclose(f);
 	
-	size_t readCnt=recvFromGba(gbaChan);
+	size_t readCnt=gbaCon[gbaChan].recv();
 	if(readCnt!=savesize) {
 		fatalError("Read size desync!\n");
 	}
@@ -50,11 +50,11 @@ void dumpGbaBios() {
 
 
 void readRom(u8 *buff,u32 offset, u32 len) {
-	sendToGba(gbaChan, READ_ROM);
-	sendToGba(gbaChan, offset);
-	sendToGba(gbaChan, len);
-	recvBuffFromGba(gbaChan, buff, len);
-	u32 readBytes=recvFromGba(gbaChan);
+	gbaCon[gbaChan].send(READ_ROM);
+	gbaCon[gbaChan].send(offset);
+	gbaCon[gbaChan].send(len);
+	gbaCon[gbaChan].recvBuff(buff, len);
+	u32 readBytes=gbaCon[gbaChan].recv();
 	if(readBytes!=len) {
 		fatalError("Read rom size missmatch!");
 	}
@@ -94,12 +94,12 @@ void backupSave() {
 	printf("Waiting for GBA\n");
 	VIDEO_WaitVSync();
 	
-	sendToGba(gbaChan,READ_SAVE); 
+	gbaCon[gbaChan].send(READ_SAVE); 
 	printf("Receiving...\n");
 	
-	recvBuffFromGba(gbaChan, testdump, savesize);
+	gbaCon[gbaChan].recvBuff(testdump, savesize);
 	
-	size_t readCnt=recvFromGba(gbaChan);
+	size_t readCnt=gbaCon[gbaChan].recv();
 	if(readCnt!=savesize) {
 		fatalError("Read size desync!\n");
 	}
@@ -134,12 +134,12 @@ void restoreSave() {
 	
 	printf("Sending save\n");
 	VIDEO_WaitVSync();
-	sendToGba(gbaChan, WRITE_SAVE);
-	sendBuffToGba(gbaChan, testdump, savesize);
+	gbaCon[gbaChan].send(WRITE_SAVE);
+	gbaCon[gbaChan].sendBuff(testdump, savesize);
 	
 	fclose(f);
 	printf("Waiting for GBA\n");
-	size_t written=recvFromGba(gbaChan);
+	size_t written=gbaCon[gbaChan].recv();
 	if(written!=savesize) {
 		fatalError("Write size desync!\n");
 	}
@@ -150,9 +150,9 @@ void restoreSave() {
 void clearSave() {
 	printf("Clearing save\n");
 	VIDEO_WaitVSync();
-	sendToGba(gbaChan, CLEAR_SAVE);
+	gbaCon[gbaChan].send(CLEAR_SAVE);
 	
-	size_t written=recvFromGba(gbaChan);
+	size_t written=gbaCon[gbaChan].recv();
 	if(written!=savesize) {
 		fatalError("Write size desync!\n");
 	}
@@ -162,19 +162,19 @@ void clearSave() {
 
 
 void testComs() {
-	sendToGba(gbaChan, PING);
-	sendToGba(gbaChan, 1234);
-	if(recvFromGba(gbaChan)!=1234) {
+	gbaCon[gbaChan].send(PING);
+	gbaCon[gbaChan].send(1234);
+	if(gbaCon[gbaChan].recv()!=1234) {
 		fatalError("Ping failure!");
 	}
 	
-	sendToGba(gbaChan, PONG);
-	sendToGba(gbaChan, recvFromGba(gbaChan));
+	gbaCon[gbaChan].send(PONG);
+	gbaCon[gbaChan].send(gbaCon[gbaChan].recv());
 	
 	printf("Send TST_READBUF packet. ");
-	sendToGba(gbaChan, TST_READBUF);
+	gbaCon[gbaChan].send(TST_READBUF);
 	printf("Recv buff ");
-	recvBuffFromGba(gbaChan, testdump, TESTBUF_LEN);
+	gbaCon[gbaChan].recvBuff(testdump, TESTBUF_LEN);
 	for(int i=0;i<TESTBUF_LEN;++i) {
 		printf("%02d",testdump[i]);
 	}
@@ -184,17 +184,17 @@ void testComs() {
 	printf("Pass.\n");
 	
 	printf("Send TST_SENDBUF packet. ");
-	sendToGba(gbaChan, TST_SENDBUF);
+	gbaCon[gbaChan].send(TST_SENDBUF);
 	for(int i=0;i<TESTBUF_LEN;++i) {
 		testdump[i]=i;
 	}
 	printf("Send buff.\n");
-	sendBuffToGba(gbaChan, testdump, TESTBUF_LEN);
+	gbaCon[gbaChan].sendBuff(testdump, TESTBUF_LEN);
 	
 	printf("Send TST_READZEROS packet. ");
-	sendToGba(gbaChan, TST_READZEROS);
+	gbaCon[gbaChan].send(TST_READZEROS);
 	printf("Recv buff ");
-	recvBuffFromGba(gbaChan, testdump, TESTBUF_LEN);
+	gbaCon[gbaChan].recvBuff(testdump, TESTBUF_LEN);
 	for(int i=0;i<TESTBUF_LEN;++i) {
 		printf("%02d",testdump[i]);
 	}
@@ -207,43 +207,43 @@ void testComs() {
 void sendDumper() {
 	printf("GBA Found! Waiting on BIOS\n");
 	
-	waitGbaBios(gbaChan);
+	waitGbaBios(gbaCon[gbaChan]);
 	
 	printf("Ready, sending dumper\n");
 	
-	gbaUploadMultiboot(gbaChan, gba_mb_gba, gba_mb_gba_size);
+	gbaUploadMultiboot(gbaCon[gbaChan], gba_mb_gba, gba_mb_gba_size);
 }
 
 void setRumble(bool active) {
-	sendToGba(gbaChan, RUMBLE);
-	sendToGba(gbaChan, active);
+	gbaCon[gbaChan].send(RUMBLE);
+	gbaCon[gbaChan].send(active);
 }
 
 u16 readGyro() {
-	sendToGba(gbaChan, GYRO_READ);
-	return recvFromGba(gbaChan);
+	gbaCon[gbaChan].send(GYRO_READ);
+	return gbaCon[gbaChan].recv();
 }
 
 struct tiltData readTilt() {
 	struct tiltData tilt;
-	sendToGba(gbaChan, TILT_READ);
-	tilt.x=recvFromGba(gbaChan);
-	tilt.y=recvFromGba(gbaChan);
+	gbaCon[gbaChan].send(TILT_READ);
+	tilt.x=gbaCon[gbaChan].recv();
+	tilt.y=gbaCon[gbaChan].recv();
 	return tilt;
 }
 
 struct rtcData readRtc() {
 	struct rtcData time;
 	
-	sendToGba(gbaChan, RTC_READ);
+	gbaCon[gbaChan].send(RTC_READ);
 	
-	u32 data=recvFromGbaRaw(gbaChan);
+	u32 data=gbaCon[gbaChan].recvRaw();
 	time.status=(data >> 24) & 0x00FF;
 	time.day=(data >> 16) & 0x00FF;
 	time.month=(data >> 8) & 0x00FF;
 	time.year=data & 0x00FF;
 	
-	data=recvFromGbaRaw(gbaChan);
+	data=gbaCon[gbaChan].recvRaw();
 	time.sec=(data >> 16) & 0x00FF;
 	time.min=(data >> 8) & 0x00FF;
 	time.hour=data & 0x00FF;

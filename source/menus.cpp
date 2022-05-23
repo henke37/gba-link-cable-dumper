@@ -38,16 +38,16 @@ void handleGbaCart() {
 	printf("Waiting for GBA\n");
 	VIDEO_WaitVSync();
 	
-	sendToGba(gbaChan, CHECK_GAME);
-	gbasize = recvFromGba(gbaChan);
-	savesize = recvFromGba(gbaChan);
+	gbaCon[gbaChan].send(CHECK_GAME);
+	gbasize = gbaCon[gbaChan].recv();
+	savesize = gbaCon[gbaChan].recv();
 	
 	if(gbasize == -1) {
 		warnError("ERROR: No (Valid) GBA Card inserted!\n");
 		return;
 	}
 	
-	readRom(((void*)&romHeader),0x00A0,sizeof(romHeader));
+	readRom(((u8*)&romHeader),0x00A0,sizeof(romHeader));
 	
 	//generate file paths
 	sprintf(romFile,"/dumps/%.12s [%.4s%.2s].gba",
@@ -103,7 +103,7 @@ void handleGbaCart() {
 		while(1) {
 			PAD_ScanPads();
 			//sendToGba( gbaChan, READ_PAD);
-			//u32 gbaBtns = recvFromGba(gbaChan);
+			//u32 gbaBtns = gbaCon[gbaChan].recv();
 			
 			VIDEO_WaitVSync();
 			u32 btns = PAD_ButtonsDown(0);
@@ -134,7 +134,7 @@ void handleGbaCart() {
 
 bool detectGba() {
 	for(gbaChan=0;gbaChan<3;++gbaChan) {
-		if(isGbaConnected(gbaChan)) return true;
+		if(gbaCon[gbaChan].isGbaConnected()) return true;
 	}
 	gbaChan=-1;
 	return false;

@@ -15,7 +15,6 @@
 #include <fcntl.h>
 #include <fat.h>
 
-#include "gba-joybus.h"
 #include "packets.h"
 #include "menus.h"
 #include "utils.h"
@@ -55,9 +54,8 @@ int main(int argc, char *argv[])
 	VIDEO_ClearFrameBuffer(rmode, xfb, COLOR_BLACK);
 	
 	PAD_Init();
-	initGbaJoyport();
 	
-	testdump = memalign(32, readBuffSize);
+	testdump = (u8*) memalign(32, readBuffSize);
 	if(!testdump) return 0;
 	
 	printBanner();
