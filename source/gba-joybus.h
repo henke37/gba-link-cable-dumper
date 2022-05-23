@@ -6,6 +6,8 @@ class GbaConnection {
 	u8 gbaStatus;
 	volatile u32 transval = 0;
 	
+	GbaConnection();
+	
 	s32 getChan() const {
 		return this-cons;
 	};
@@ -22,8 +24,6 @@ class GbaConnection {
 	static void transcb(s32 chan, u32 ret);
 	
 public:
-	GbaConnection();
-	
 	void resetGba();
 	u32 recv();
 	u32 recvRaw();
