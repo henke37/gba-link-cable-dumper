@@ -22,15 +22,11 @@
 #define JOYSTAT_SEND 8
 #define JOYSTAT_RECV 2
 
-GbaConnection gbaCon[4];
+GbaConnection GbaConnection::cons[4];
 
-
-volatile u32 transval = 0;
-void transcb(s32 chan, u32 ret) {
-	transval = 1;
+void GbaConnection::transcb(s32 chan, u32 ret) {
+	gbaCon[chan].transval = 1;
 }
-
-volatile u32 resval = 0;
 
 GbaConnection::GbaConnection() {
 	cmdbuf = (u8*) memalign(32,32);
