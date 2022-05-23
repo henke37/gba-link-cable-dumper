@@ -1,5 +1,5 @@
-#ifndef GBA_JOYPORT_H
-#define GBA_JOYPORT_H
+#ifndef GBA_JOYBUS_H
+#define GBA_JOYBUS_H
 void initGbaJoyport();
 
 void resetGba(s32 chan);

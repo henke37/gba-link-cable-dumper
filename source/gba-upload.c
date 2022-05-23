@@ -7,7 +7,7 @@
 #include <gccore.h>
 
 #include "gba-upload.h"
-#include "gba-joyport.h"
+#include "gba-joybus.h"
 
 extern u8 *resbuf;
 

@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "gba-joyport.h"
+#include "gba-joybus.h"
 #include "utils.h"
 
 //from my tests 50us seems to be the lowest

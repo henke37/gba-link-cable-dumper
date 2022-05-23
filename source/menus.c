@@ -6,7 +6,7 @@
 #include <gccore.h>
 #include <unistd.h>
 
-#include "gba-joyport.h"
+#include "gba-joybus.h"
 #include "gba-upload.h"
 #include "packets.h"
 #include "utils.h"

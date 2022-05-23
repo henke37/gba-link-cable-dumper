@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "globals.h"
-#include "gba-joyport.h"
+#include "gba-joybus.h"
 #include "gba-upload.h"
 #include "utils.h"
 #include "globals.h"

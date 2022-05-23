@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <fat.h>
 
-#include "gba-joyport.h"
+#include "gba-joybus.h"
 #include "packets.h"
 #include "menus.h"
 #include "utils.h"
