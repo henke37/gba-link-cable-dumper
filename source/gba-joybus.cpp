@@ -32,6 +32,10 @@ GbaConnection::GbaConnection() {
 	cmdbuf = (u8*) memalign(32,32);
 	resbuf = (u8*) memalign(32,32);
 }
+GbaConnection::~GbaConnection() {
+	free(cmdbuf);
+	free(resbuf);
+}
 
 bool GbaConnection::isGbaConnected() const {
 	u32 type=SI_Probe(getChan());

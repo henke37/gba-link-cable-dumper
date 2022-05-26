@@ -7,6 +7,9 @@ class GbaConnection {
 	volatile u32 transval = 0;
 	
 	GbaConnection();
+	GbaConnection(const GbaConnection&)=delete;
+	GbaConnection(GbaConnection&&)=delete;
+	~GbaConnection();
 	
 	s32 getChan() const {
 		return this-cons;
