@@ -110,7 +110,7 @@ void handleGbaCart() {
 			if(btns&PAD_BUTTON_START)
 				endproc();
 			
-			if(btns&PAD_BUTTON_A && ( !romExists || (PAD_ButtonsHeld(0) & (PAD_TRIGGER_L)) ) ) {
+			if(btns&PAD_BUTTON_A && ( !romExists || (PAD_ButtonsHeld(0) & PAD_TRIGGER_L) ) ) {
 				dumpRom();
 			} else if(btns & PAD_BUTTON_B) {
 				return;
@@ -164,8 +164,15 @@ void waitGbaConnect() {
 void preDumpMenu() {
 	while(1) {
 		clearScreen();
+		
+		bool biosDumped=fileExists(biosname);
+		
 		printf("Press A once you have a GBA Game inserted.\n");
-		printf("Press Y to backup the GBA BIOS.\n \n");
+		if(biosDumped) {
+			printf("GBA BIOS dumped.\n");
+		} else {
+			printf("Press Y to backup the GBA BIOS.\n \n");
+		}
 		
 		while(1) {
 			PAD_ScanPads();
@@ -177,7 +184,7 @@ void preDumpMenu() {
 			} else if(btns&PAD_BUTTON_A) {
 				handleGbaCart();
 				break;
-			} else if(btns&PAD_BUTTON_Y) {
+			} else if(btns&PAD_BUTTON_Y && (!biosDumped || (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))) {
 				dumpGbaBios();
 				break;
 			}

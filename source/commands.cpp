@@ -15,14 +15,7 @@
 #include "gba_mb_gba.h"
 
 void dumpGbaBios() {
-	FILE *f = fopen(biosname,"rb");
-	if(f)
-	{
-		fclose(f);
-		warnError("ERROR: BIOS already backed up!\n");
-		return;
-	}
-
+	FILE *f;
 	//create base file with size
 	printf("Preparing file...\n");
 	f = fopen(biosname,"wb");
