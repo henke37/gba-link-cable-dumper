@@ -76,7 +76,7 @@ void handleGbaCart() {
 			printf("No Save File\n \n");
 			
 		
-		bool romExists = false;//fileExists(romFile);
+		bool romExists = fileExists(romFile);
 		bool saveExists = fileExists(saveFile);
 	
 		//let the user choose the option
@@ -110,7 +110,7 @@ void handleGbaCart() {
 			if(btns&PAD_BUTTON_START)
 				endproc();
 			
-			if(btns&PAD_BUTTON_A) {
+			if(btns&PAD_BUTTON_A && ( !romExists || (PAD_ButtonsHeld(0) & (PAD_TRIGGER_L)) ) ) {
 				dumpRom();
 			} else if(btns & PAD_BUTTON_B) {
 				return;
