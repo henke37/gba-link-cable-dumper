@@ -112,6 +112,7 @@ void handleGbaCart() {
 			
 			if(btns&PAD_BUTTON_A && ( !romExists || (PAD_ButtonsHeld(0) & PAD_TRIGGER_L) ) ) {
 				dumpRom();
+				break;
 			} else if(btns & PAD_BUTTON_B) {
 				return;
 			} else if(btns & PAD_BUTTON_Y) {
