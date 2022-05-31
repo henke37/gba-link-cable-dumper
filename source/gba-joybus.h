@@ -19,6 +19,8 @@ class GbaConnection {
 	
 	u32 recvRawNoWait();
 	u32 recvRawUntilSet();
+	
+	void setGbaStatus(u8);
 
 	void waitGbaReadSentData();
 	void waitGbaSetDataToRecv();

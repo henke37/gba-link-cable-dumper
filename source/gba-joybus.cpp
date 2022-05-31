@@ -22,6 +22,8 @@
 #define JOYSTAT_SEND 8
 #define JOYSTAT_RECV 2
 
+#define JOYSTAT_INVALID_BITS 0xC5
+
 GbaConnection GbaConnection::cons[4];
 
 void GbaConnection::transcb(s32 chan, u32 ret) {
@@ -42,13 +44,18 @@ bool GbaConnection::isGbaConnected() const {
 	return type==(SI_GBA);
 }
 
+void GbaConnection::setGbaStatus(u8 status) {
+	if(status & JOYSTAT_INVALID_BITS) fatalError("Bad JOYSTAT bits.");
+	gbaStatus=status;
+}
+
 void GbaConnection::resetGba() {
 	cmdbuf[0] = 0xFF; //reset
 	transval = 0;
 	SI_Transfer(getChan(),cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 	
-	gbaStatus=resbuf[2];
+	setGbaStatus(resbuf[2]);
 }
 void GbaConnection::pollStatus() {
 	cmdbuf[0] = 0; //status
@@ -56,7 +63,7 @@ void GbaConnection::pollStatus() {
 	SI_Transfer(getChan(),cmdbuf,1,resbuf,3,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
 	
-	gbaStatus=resbuf[2];
+	setGbaStatus(resbuf[2]);
 }
 u32 GbaConnection::recvRaw() {
 	waitGbaSetDataToRecv();
@@ -72,7 +79,7 @@ u32 GbaConnection::recvRawNoWait() {
 	while(transval == 0) ;
 	
 	recvData=*(vu32*)resbuf;
-	gbaStatus=resbuf[4];
+	setGbaStatus(resbuf[4]);
 	
 	return recvData;
 }
@@ -90,7 +97,7 @@ void GbaConnection::send(u32 msg) {
 	resbuf[0] = 0;
 	SI_Transfer(getChan(),cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
-	gbaStatus=resbuf[0];
+	setGbaStatus(resbuf[0]);
 	
 	waitGbaReadSentData();
 }
@@ -105,7 +112,7 @@ void GbaConnection::sendRaw(const u8 *buff) {
 	resbuf[0] = 0;
 	SI_Transfer(getChan(),cmdbuf,5,resbuf,1,transcb,SI_TRANS_DELAY);
 	while(transval == 0) ;
-	gbaStatus=resbuf[0];
+	setGbaStatus(resbuf[0]);
 	
 	waitGbaReadSentData();
 }
