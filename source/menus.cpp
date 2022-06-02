@@ -217,9 +217,9 @@ void ereaderMenu() {
 void rtcAndUvMenu() {
 	struct rtcData time=readRtc();
 	
-	/*if(time.status & 0x0070) {
+	if(time.status & 0x0070) {
 		printf("RTC: Bad power!\n");
-	} else*/ {
+	} else {
 		printf(
 			"RTC: %d/%d/%d %d:%d:%d\n",
 			time.year+2000,
