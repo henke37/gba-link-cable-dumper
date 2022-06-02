@@ -45,6 +45,12 @@ void rtcWriteBit(bool bit) {
 	GPIO_DATA = RTC_CS | (bit?RTC_SIO:0);
 }
 
+void rtcWriteCMD(u8 data) {
+	GPIO_DIR = RTC_CS | RTC_SCK | RTC_SIO;
+	for(int i=7;i>=0;--i) {
+		rtcWriteBit(data & 1<<i);
+	}
+}
 void rtcWriteByte(u8 data) {
 	GPIO_DIR = RTC_CS | RTC_SCK | RTC_SIO;
 	for(int i=0;i<8;++i) {
@@ -61,21 +67,21 @@ u8 rtcReadByte() {
 }
 
 void rtcResetTime() {
-	rtcWriteByte(0x60);
+	rtcWriteCMD(0x60);
 }
 
 u8 rtcReadStatus() {
-	rtcWriteByte(0x63);
+	rtcWriteCMD(0x63);
 	return rtcReadByte();
 }
 void rtcWriteStatus(u8 data) {
-	rtcWriteByte(0x62);
+	rtcWriteCMD(0x62);
 	rtcWriteByte(data);
 }
 
 struct rtcTime rtcReadTime() {
 	struct rtcTime time;
-	rtcWriteByte(0x65);
+	rtcWriteCMD(0x65);
 	time.year=fromBCD(rtcReadByte());
 	time.month=fromBCD(rtcReadByte());
 	time.day=fromBCD(rtcReadByte());
@@ -90,7 +96,7 @@ struct rtcTime rtcReadTime() {
 }
 
 void rtcSetTime(struct rtcTime time) {
-	rtcWriteByte(0x64);
+	rtcWriteCMD(0x64);
 	rtcWriteByte(toBCD(time.year));
 	rtcWriteByte(toBCD(time.month));
 	rtcWriteByte(toBCD(time.day));
