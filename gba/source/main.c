@@ -238,6 +238,11 @@ void handlePacket(u32 type) {
 			sendJoyBus((time.hour +(time.pm?12:0)) | time.min << 8 | time.sec << 16);
 		} break;
 		
+		case SOLAR_READ: {
+			u8 status=solarRead();
+			sendJoyBus(status);
+		} break;
+		
 		default:
 			iprintf("Got unknown packet %#010lx!\n",type);
 		break;
