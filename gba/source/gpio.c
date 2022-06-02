@@ -106,7 +106,27 @@ void rtcSetTime(struct rtcTime time) {
 	rtcWriteByte(toBCD(time.sec));
 }
 
-void solarRead();
+u8 solarRead() {
+	u8 cnt=0xFF;
+	
+	u32 prevIrqMask = REG_IME;
+	REG_IME = 0;
+	
+	GPIO_DIR=SOL_CLK | SOL_RST;
+	GPIO_DATA=SOL_RST;
+	GPIO_DATA=0;
+	
+	for(;cnt>0;--cnt) {
+		GPIO_DATA=SOL_CLK;
+		GPIO_DATA=0;
+		if(GPIO_DATA & SOL_FLG) break;
+	}
+	
+	REG_IME = prevIrqMask;
+	
+	return cnt;
+}
+
 void setRumble(bool active) {
 	GPIO_DIR=0x0B;
 	GPIO_DATA=(GPIO_DATA & ~RUMBLE_FLAG) | (active?RUMBLE_FLAG:0);

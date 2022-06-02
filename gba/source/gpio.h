@@ -8,7 +8,7 @@ void initGPIO();
 
 void initRTC();
 
-void solarRead();
+u8 solarRead();
 void setRumble(bool active);
 
 u16 readGyro();
