@@ -243,3 +243,8 @@ struct rtcData readRtc() {
 	
 	return time;
 }
+
+u8 readSolar() {
+	gbaCon[gbaChan].send(SOLAR_READ);
+	return gbaCon[gbaChan].recv();
+}

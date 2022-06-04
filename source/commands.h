@@ -36,4 +36,6 @@ struct rtcData {
 
 struct rtcData readRtc();
 
+u8 readSolar();
+
 #endif
