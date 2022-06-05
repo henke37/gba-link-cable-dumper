@@ -20,4 +20,7 @@ extern u8 save_data[0x20000];
 void readSave(u8 *data, u32 savesize);
 void writeSave(u8 *data, u32 savesize);
 
+extern s32 gamesize;
+extern u32 savesize;
+
 #endif

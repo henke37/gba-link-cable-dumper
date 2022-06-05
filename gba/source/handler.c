@@ -65,8 +65,8 @@ void handlePacket(u32 type) {
 		
 		case CHECK_GAME: {
 			iprintf("Checking game...\n");
-			s32 gamesize = getGameSize();
-			u32 savesize = SaveSize(save_data,gamesize);
+			gamesize = getGameSize();
+			savesize = SaveSize(save_data,gamesize);
 			sendJoyBus(gamesize);
 			sendJoyBus(savesize);
 			
@@ -85,8 +85,6 @@ void handlePacket(u32 type) {
 		
 		case READ_SAVE: {
 			iprintf("Reading save.\n");
-			s32 gamesize = getGameSize();
-			u32 savesize = SaveSize(save_data,gamesize);
 			
 			readSave(save_data,savesize);
 			sendJoyBusBuff(save_data, savesize);
@@ -95,8 +93,6 @@ void handlePacket(u32 type) {
 		
 		case WRITE_SAVE: {
 			iprintf("Writing save.\n");
-			s32 gamesize = getGameSize();
-			u32 savesize = SaveSize(save_data,gamesize);
 			
 			recvJoyBusBuff(save_data, savesize);
 			writeSave(save_data, savesize);
@@ -104,9 +100,7 @@ void handlePacket(u32 type) {
 		} break;
 		
 		case CLEAR_SAVE: {
-			iprintf("Erasing save. Hope you made a save first!\n");
-			s32 gamesize = getGameSize();
-			u32 savesize = SaveSize(save_data,gamesize);
+			iprintf("Erasing save. Hope you made a copy first!\n");
 			
 			//clear the save
 			memset(save_data, 0, savesize);
