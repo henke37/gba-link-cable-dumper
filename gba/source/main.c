@@ -13,6 +13,7 @@
 #include "joybus.h"
 #include "gpio.h"
 #include "tilt.h"
+#include "transman.h"
 
 #include "../../source/packets.h"
 
@@ -56,6 +57,8 @@ int main(void) {
 	
 	irqSet(IRQ_SERIAL, sioHandler);
 	irqEnable(IRQ_SERIAL);
+	
+	transManInit();
 
 	consoleDemoInit();
 	
@@ -88,14 +91,18 @@ void sioHandler() {
  
 	//iprintf("IRQ: %#0x %#0x!\n",REG_HS_CTRL, REG_JSTAT);
 	if(isJoyBusRecvPending()) {
-		u32 type=recvJoyBus();
-		handlePacket(type);
+		if(!transManRecvCB()) {
+			u32 type=recvJoyBus();
+			handlePacket(type);
+		}
 	}
 	if(isJoyBusSendPending()) {
-		iprintf("Spurious send?\n");
-		REG_IME=0;
-		while (1) {
-			Halt();
+		if(!transManSendCB()) {
+			iprintf("Spurious send?\n");
+			REG_IME=0;
+			while (1) {
+				Halt();
+			}
 		}
 	}
 	if(isJoyBusResetPending()) {

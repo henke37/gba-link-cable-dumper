@@ -8,6 +8,7 @@ bool isJoyBusRecvPending();
 bool isJoyBusSendPending();
 bool isJoyBusResetPending();
 
+void sendJoyBusNoJStat(u32 data);
 void sendJoyBus(u32 data);
 u32 recvJoyBus();
 
