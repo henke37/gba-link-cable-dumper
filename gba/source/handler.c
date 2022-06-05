@@ -5,6 +5,7 @@
 #include "joybus.h"
 #include "main.h"
 #include "libSave.h"
+#include "transman.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@
 #include "../../source/packets.h"
 
 void sendBiosDump();
+void finishWriteSave();
 
 void handlePacket(u32 type) {
 	switch(type) {
@@ -78,25 +80,21 @@ void handlePacket(u32 type) {
 			u32 length = recvJoyBus();
 			const u8* addr=ROM_DATA+offset;
 			iprintf("ROMREAD: %p %lx ",addr,length);
-			sendJoyBusBuff(addr, length);
-			sendJoyBus(length);
-			iprintf("OK\n");
+			
+			transManSetSend(addr, length, transManSendCompleteDefaultCb);
 		} break;
 		
 		case READ_SAVE: {
 			iprintf("Reading save.\n");
 			
 			readSave(save_data,savesize);
-			sendJoyBusBuff(save_data, savesize);
-			sendJoyBus(savesize);
+			transManSetSend(save_data, savesize, transManSendCompleteDefaultCb);
 		} break;
 		
 		case WRITE_SAVE: {
 			iprintf("Writing save.\n");
 			
-			recvJoyBusBuff(save_data, savesize);
-			writeSave(save_data, savesize);
-			sendJoyBus(savesize);
+			transManSetRecv(save_data, savesize, finishWriteSave);
 		} break;
 		
 		case CLEAR_SAVE: {
@@ -168,4 +166,9 @@ void sendBiosDump() {
 	REG_IME = prevIrqMask;
 	
 	sendJoyBus(biosSize);
+}
+
+void finishWriteSave() {
+	writeSave(save_data, savesize);
+	sendJoyBus(savesize);
 }
