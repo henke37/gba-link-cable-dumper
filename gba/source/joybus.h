@@ -12,6 +12,9 @@ void sendJoyBusNoJStat(u32 data);
 void sendJoyBus(u32 data);
 u32 recvJoyBus();
 
+void ackJoySend();
+void ackJoyRecv();
+
 void sendJoyBusBuff(const u8 *data, int len);
 void recvJoyBusBuff(u8 *data, int len);
 

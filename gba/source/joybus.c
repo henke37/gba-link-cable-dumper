@@ -38,7 +38,7 @@ void sendJoyBusNoJStat(u32 data) {
 	//iprintf("S:%lx", data);
 	REG_JOYTR=data;
 	waitJoyBusSendCmd();
-	REG_HS_CTRL |= JOYCNT_SEND;
+	ackJoySend();
 }
 
 void sendJoyBus(u32 data) {
@@ -46,11 +46,19 @@ void sendJoyBus(u32 data) {
 	sendJoyBusNoJStat(data);
 }
 
+void ackJoySend() {
+	REG_HS_CTRL |= JOYCNT_SEND;
+}
+
+void ackJoyRecv() {
+	REG_HS_CTRL |= JOYCNT_RECV;
+}
+
 u32 recvJoyBus() {
 	waitJoyBusRecvCmd();
 	
 	u32 val = REG_JOYRE;
-	REG_HS_CTRL |= JOYCNT_RECV;
+	ackJoyRecv();
 	//iprintf("R:%lx", val);
 	return val;
 }

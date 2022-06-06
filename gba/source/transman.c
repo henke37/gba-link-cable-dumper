@@ -54,10 +54,20 @@ void transManSetRecv(u8 *dst, size_t len, transCompleteCb cb) {
 bool transManSendCB() {
 	if(sendBuff==NULL) return false;
 	
+	ackJoySend();
+	
 	iprintf("TMSCB: %d\n",sendProgress);
+		
+	assert(sendProgress<=sendLen);
+	if(sendProgress==sendLen) {
+		sendCompleteCb();
+		sendBuff=NULL;
+	}
 	
 	u32 val=*(vu32*)(sendBuff+sendProgress);
 	if(val==sendPrevVal) {
+		REG_JSTAT |= 0x0010;
+		
 		int k=1;
 		int kMax=(sendLen-sendProgress)/4;
 		for(;k<kMax;++k) {
@@ -65,25 +75,22 @@ bool transManSendCB() {
 			if(val!=sendPrevVal) break;
 		}
 		//k+=1;
-		REG_JSTAT |= 0x0010;
-		sendJoyBusNoJStat(k);
+		
+		REG_JOYTR=k;
 		sendProgress+=4*k;
 	} else {
-		sendJoyBus(val);
+		REG_JSTAT &= ~0x0010;
+		REG_JOYTR=val;
 		sendPrevVal=val;
 		sendProgress+=4;
-	}
-	
-	assert(sendProgress<=sendLen);
-	if(sendProgress==sendLen) {
-		sendCompleteCb();
-		sendBuff=NULL;
 	}
 	
 	return true;
 }
 bool transManRecvCB() {
 	if(recvBuff==NULL) return false;
+	
+	ackJoyRecv();
 	
 	*(vu32*)(recvBuff+recvProgress) = recvJoyBus();
 	
