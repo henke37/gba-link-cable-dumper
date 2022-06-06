@@ -15,6 +15,7 @@
 
 void sendBiosDump();
 void finishWriteSave();
+void checkSendBufResult();
 
 void handlePacket(u32 type) {
 	switch(type) {
@@ -37,7 +38,7 @@ void handlePacket(u32 type) {
 			for(int i=0;i<TESTBUF_LEN;++i) {
 				save_data[i]=i/10;
 			}
-			sendJoyBusBuff(save_data, TESTBUF_LEN);
+			transManSetSend(save_data, TESTBUF_LEN, transManSendCompleteDefaultCb);
 		} break;
 		
 		case TST_READZEROS: {
@@ -45,20 +46,14 @@ void handlePacket(u32 type) {
 			for(int i=0;i<TESTBUF_LEN;++i) {
 				save_data[i]=0;
 			}
-			sendJoyBusBuff(save_data, TESTBUF_LEN);
+			transManSetSend(save_data, TESTBUF_LEN, transManSendCompleteDefaultCb);
 		} break;
 		
 		case TST_SENDBUF: {
 			iprintf("TST_SB ");
 			memset(save_data,0,TESTBUF_LEN);
-			recvJoyBusBuff(save_data, TESTBUF_LEN);
-			for(int i=0;i<TESTBUF_LEN;++i) {
-				if(save_data[i]!=i) {
-					iprintf("FAIL!");
-					break;
-				}
-			}
-			iprintf("PASS");
+			
+			transManSetRecv(save_data, TESTBUF_LEN, checkSendBufResult);
 		} break;
 		
 		case READ_PAD: {
@@ -171,4 +166,14 @@ void sendBiosDump() {
 void finishWriteSave() {
 	writeSave(save_data, savesize);
 	sendJoyBus(savesize);
+}
+
+void checkSendBufResult() {
+	for(int i=0;i<TESTBUF_LEN;++i) {
+		if(save_data[i]!=i) {
+			iprintf("FAIL!");
+			break;
+		}
+	}
+	iprintf("PASS");
 }
