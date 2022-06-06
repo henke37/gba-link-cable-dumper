@@ -33,7 +33,7 @@ public:
 	u32 recv();
 	u32 recvRaw();
 	
-	u32 recvBuff(u8 *buff, int len);
+	void recvBuff(u8 *buff, int len);
 	void sendBuff(const u8 *buff, int len);
 	
 	void send(u32);

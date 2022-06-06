@@ -47,10 +47,6 @@ void readRom(u8 *buff,u32 offset, u32 len) {
 	gbaCon[gbaChan].send(offset);
 	gbaCon[gbaChan].send(len);
 	gbaCon[gbaChan].recvBuff(buff, len);
-	u32 readBytes=gbaCon[gbaChan].recv();
-	if(readBytes!=len) {
-		fatalError("Read rom size missmatch!");
-	}
 }
 
 void dumpRom() {

@@ -131,7 +131,7 @@ u32 GbaConnection::recvRawUntilSet() {
 	return val;
 }
 
-u32 GbaConnection::recvBuff(u8 *buff, int len) {
+void GbaConnection::recvBuff(u8 *buff, int len) {
 	int j;
 	u32 bytes_read = 0;
 	
@@ -167,7 +167,11 @@ u32 GbaConnection::recvBuff(u8 *buff, int len) {
 		}
 	}
 	
-	return bytes_read;
+	u32 readBytes=recv();
+	
+	if(readBytes!=bytes_read) {
+		fatalError("Read rom size missmatch!");
+	}
 }
 
 void GbaConnection::sendBuff(const u8 *buff, int len) {
